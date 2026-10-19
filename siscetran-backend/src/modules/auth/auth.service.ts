@@ -209,7 +209,7 @@ export class AuthService {
     await transporter.sendMail({
       from: process.env.SMTP_FROM || EMAIL_CONTATO,
       to: usuario.email,
-      subject: '[SAEP] Definição de nova senha',
+      subject: '[Radar 2030] Definição de nova senha',
       text: [
         'Use o token abaixo para definir uma nova senha. Ele é válido por 1 hora.',
         '',

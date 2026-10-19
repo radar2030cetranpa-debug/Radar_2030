@@ -44,7 +44,7 @@ export function SuporteTecnico({ onVoltar }) {
                     <p style={{ margin: 0, color: '#2563eb', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Central de atendimento</p>
                     <h1 style={{ margin: '0.45rem 0 0', color: '#0f172a', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)' }}>Suporte técnico</h1>
                     <p style={{ margin: '0.75rem 0 0', color: '#64748b', lineHeight: 1.7, maxWidth: '680px' }}>
-                        Encontre orientações para usar o SAEP ou registre uma dificuldade encontrada durante o acesso e o preenchimento das matrizes.
+                        Encontre orientações para usar o Radar 2030 ou registre uma dificuldade encontrada durante o acesso e o preenchimento das matrizes.
                     </p>
                 </div>
                 <button type="button" onClick={onVoltar} style={estiloBotaoSecundario}>

@@ -190,7 +190,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
                     }}
                 />
                 <h1 style={{ fontSize: '2.2rem', color: '#0f172a', margin: '0 0 0.5rem 0', fontWeight: 800, letterSpacing: '-0.02em' }}>
-                    Sistema de Ações Estratégicas do PETRANS
+                    Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030
                 </h1>
                 <p style={{ fontSize: '1.05rem', color: '#64748b', lineHeight: 1.7, margin: '0 auto 2rem auto', maxWidth: '620px' }}>
                     Plataforma institucional do CETRAN-PA para planejamento, elaboração de matrizes 5W2H, acompanhamento de metas estratégicas e deliberação do Comitê Técnico.

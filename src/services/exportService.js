@@ -33,7 +33,7 @@ export function exportarMatrizesAprovadasCSV(matrizes) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `matrizes_aprovadas_saep_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `matrizes_aprovadas_radar2030_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -69,7 +69,7 @@ export function exportarMatrizesAprovadasExcel(matrizes) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Matrizes Aprovadas");
 
-    const nomeArquivo = `matrizes_aprovadas_saep_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const nomeArquivo = `matrizes_aprovadas_radar2030_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(workbook, nomeArquivo);
 
     return { sucesso: true, quantidade: aprovadas.length };

@@ -6,7 +6,7 @@ import '../styles/acoesEstrategicas.css';
 
 export function AcoesEstrategicas({ onSelecionarAcoes }) {
     const [termoBusca, setTermoBusca] = useState('');
-    const [selecionadas, setSelecionadas] = useState([]);
+    const [selecionada, setSelecionada] = useState('');
 
     // Filtra as ações com segurança contra valores nulos
     const acoesFiltradas = acoesEstrategicas.filter(acao => {
@@ -18,17 +18,11 @@ export function AcoesEstrategicas({ onSelecionarAcoes }) {
         return textoCompleto.includes(termoBusca.toLowerCase());
     });
 
-    const handleCheckboxChange = (id, linhaPlanilha) => {
-        const chaveUnica = `${id}-${linhaPlanilha}`;
-        if (selecionadas.includes(chaveUnica)) {
-            setSelecionadas(selecionadas.filter(item => item !== chaveUnica));
-        } else {
-            setSelecionadas([...selecionadas, chaveUnica]);
-        }
+    const handleAcaoSelecionada = (id, linhaPlanilha) => {
+        setSelecionada(`${id}-${linhaPlanilha}`);
     };
 
-    // Computa as ações selecionadas de forma segura antes de usar
-    const selectedActions = acoesEstrategicas.filter(a => selecionadas.includes(`${a.id}-${a.linhaPlanilha}`));
+    const selectedActions = acoesEstrategicas.filter(a => `${a.id}-${a.linhaPlanilha}` === selecionada);
     const selectedCount = selectedActions.length;
     const selectedAction = selectedActions[0];
 
@@ -103,16 +97,17 @@ export function AcoesEstrategicas({ onSelecionarAcoes }) {
                                 {acoesFiltradas.length > 0 ? (
                                     acoesFiltradas.map(acao => {
                                         const chaveUnica = `${acao.id}-${acao.linhaPlanilha}`;
-                                        const estaSelecionada = selecionadas.includes(chaveUnica);
+                                        const estaSelecionada = selecionada === chaveUnica;
                                         const prazoClasse = prazoClassName(acao.prazo);
 
                                         return (
-                                            <tr key={chaveUnica} className={estaSelecionada ? 'selected-row' : ''} onClick={() => handleCheckboxChange(acao.id, acao.linhaPlanilha)} style={{ cursor: 'pointer' }}>
+                                            <tr key={chaveUnica} className={estaSelecionada ? 'selected-row' : ''} onClick={() => handleAcaoSelecionada(acao.id, acao.linhaPlanilha)} style={{ cursor: 'pointer' }}>
                                                 <td className="check-cell" onClick={(e) => e.stopPropagation()}>
                                                     <input
-                                                        type="checkbox"
+                                                        type="radio"
+                                                        name="acao-selecionada"
                                                         checked={estaSelecionada}
-                                                        onChange={() => handleCheckboxChange(acao.id, acao.linhaPlanilha)}
+                                                        onChange={() => handleAcaoSelecionada(acao.id, acao.linhaPlanilha)}
                                                         aria-label={`Selecionar ação ${acao.id}`}
                                                     />
                                                 </td>
@@ -144,7 +139,7 @@ export function AcoesEstrategicas({ onSelecionarAcoes }) {
                     {selectedCount > 0 && (
                         <div className="detail-card">
                             <div>
-                                <p className="detail-eyebrow">{selectedCount === 1 ? 'Ação selecionada' : 'Ações selecionadas'}</p>
+                                <p className="detail-eyebrow">Ação selecionada</p>
                                 <p className="detail-text">{selectedAction?.setor ? `Setor responsável: ${selectedAction.setor}` : 'Setor responsável não atribuído.'}</p>
                                 <p className="detail-text"><strong>{selectedCount}</strong> ação{selectedCount > 1 ? 's selecionadas' : ' selecionada'}.</p>
                                 <div className="selected-actions-list">
@@ -158,7 +153,7 @@ export function AcoesEstrategicas({ onSelecionarAcoes }) {
                                     Use o botão abaixo para iniciar a matriz 5W2H com a seleção atual.
                                 </div>
                                 <button className="floating-action-button" onClick={handleAvancarParaDetalhar}>
-                                    Criar matriz ({selectedCount})
+                                    Criar matriz
                                 </button>
                             </div>
                         </div>

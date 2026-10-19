@@ -340,7 +340,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                             <img src={logoImg} alt="Logo Radar 2030" style={{ height: '40px', margin: '0 auto 0.75rem auto', display: 'block' }} />
                             <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>Acesso ao Radar 2030</h2>
-                            <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>Sistema de Ações Estratégicas do PETRANS</p>
+                            <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030</p>
                         </div>
                         <form onSubmit={handleLoginSubmit}>
                             <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}>E-mail:</label>

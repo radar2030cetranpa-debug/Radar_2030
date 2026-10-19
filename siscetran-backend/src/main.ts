@@ -47,7 +47,7 @@ async function bootstrap() {
   // Swagger
   const config = new DocumentBuilder()
     .setTitle('Radar 2030 API')
-    .setDescription('API do Sistema de Ações Estratégicas do PETRANS')
+    .setDescription('API do Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('auth', 'Autenticação')

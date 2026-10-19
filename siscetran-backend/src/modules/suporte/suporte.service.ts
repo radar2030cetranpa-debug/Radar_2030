@@ -35,7 +35,7 @@ export class SuporteService {
       from: remetente,
       to: destinatario,
       replyTo: dto.email || remetente,
-      subject: `[SAEP] Suporte técnico - ${dto.tipoProblema}`,
+      subject: `[Radar 2030] Suporte técnico - ${dto.tipoProblema}`,
       text: [
         `Nome: ${dto.nome}`,
         `E-mail: ${dto.email}`,

@@ -1,7 +1,12 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtGuard } from '../../common/guards/jwt.guard';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('dashboard')
 @ApiBearerAuth()
@@ -33,7 +38,10 @@ export class DashboardController {
 
   @Get('matrizes/aprovadas')
   @ApiOperation({ summary: 'Listar matrizes aprovadas' })
-  @ApiResponse({ status: 200, description: 'Lista de matrizes aprovadas retornada' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de matrizes aprovadas retornada',
+  })
   async getMatrizesAprovadas() {
     return this.dashboardService.getMatrizesAprovadas();
   }

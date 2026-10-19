@@ -34,14 +34,20 @@ export class ComiteController {
 
   @Get('pendentes')
   @ApiOperation({ summary: 'Listar matrizes pendentes de avaliação' })
-  @ApiResponse({ status: 200, description: 'Lista de matrizes pendentes retornada' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de matrizes pendentes retornada',
+  })
   async getPendentes() {
     return this.comiteService.getPendentes();
   }
 
   @Get('estatisticas')
   @ApiOperation({ summary: 'Obter estatísticas do comitê' })
-  @ApiResponse({ status: 200, description: 'Estatísticas retornadas com sucesso' })
+  @ApiResponse({
+    status: 200,
+    description: 'Estatísticas retornadas com sucesso',
+  })
   async getEstatisticas() {
     return this.comiteService.getEstatisticas();
   }
@@ -71,7 +77,9 @@ export class ComiteController {
   }
 
   @Post('matrizes/:id/votar')
-  @ApiOperation({ summary: 'Registrar voto consultivo (Conselheiro ou Admin Geral)' })
+  @ApiOperation({
+    summary: 'Registrar voto consultivo (Conselheiro ou Admin Geral)',
+  })
   @ApiResponse({ status: 200, description: 'Voto registrado com sucesso' })
   async votar(
     @Param('id') id: string,

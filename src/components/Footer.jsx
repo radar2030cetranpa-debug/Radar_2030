@@ -14,7 +14,7 @@ export function Footer({ onNavigate }) {
         }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
                 <p style={{ margin: 0, fontWeight: '500', color: '#1e293b' }}>
-                    SAEP &mdash; Sistema de Ações Estratégicas do PETRANS
+                    Radar 2030 &mdash; Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030
                 </p>
                 <p style={{ margin: 0 }}>
                     Conselho Estadual de Trânsito do Estado do Pará &copy; {new Date().getFullYear()} &mdash; Todos os direitos reservados.

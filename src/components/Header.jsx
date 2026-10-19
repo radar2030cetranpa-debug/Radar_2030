@@ -17,6 +17,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
 
     const {
         HOME = 'home',
+        DASHBOARD = 'dashboard',
         ACOES = 'acoes',
         CONSULTAR = 'consultar',
         RASCUNHOS = 'rascunhos',
@@ -111,7 +112,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
             <div className="header-brand" onClick={() => handleNavigate(HOME)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <img
                     src={logoImg}
-                    alt="Logo SAEP"
+                    alt="Logo Radar 2030"
                     style={{
                         height: '42px',
                         width: 'auto',
@@ -126,6 +127,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                 {estaLogado && (
                     <>
                         <button className="button" onClick={() => handleNavigate(HOME)} style={estiloBotaoNav(telaAtual === HOME)}>Início</button>
+                        <button className="button" onClick={() => handleNavigate(DASHBOARD)} style={estiloBotaoNav(telaAtual === DASHBOARD)}>Dashboard</button>
                         <button className="button" onClick={() => handleNavigate(ACOES)} style={estiloBotaoNav(telaAtual === ACOES)}>Ações Estratégicas</button>
                         <button className="button" onClick={() => handleNavigate(CONSULTAR)} style={estiloBotaoNav(telaAtual === CONSULTAR)}>Minhas Matrizes</button>
                         <button className="button" onClick={() => handleNavigate(RASCUNHOS)} style={estiloBotaoNav(telaAtual === RASCUNHOS)}>Meus Rascunhos</button>
@@ -245,7 +247,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     </div>
                                 </div>
 
-                                {/* Opção Comitê (se tiver permissão) */}
+                                {/* Opção Painel Gestor (se tiver permissão) */}
                                 {podeVerComite && (
                                     <button
                                         type="button"
@@ -253,7 +255,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                         style={estiloItemDropdown(telaAtual === COMITE)}
                                     >
                                         <i className="bi bi-people-fill" style={{ color: '#d97706', fontSize: '1rem' }}></i>
-                                        <span>Comitê</span>
+                                        <span>Painel Gestor</span>
                                         {telaAtual === COMITE && <i className="bi bi-check2" style={{ marginLeft: 'auto', color: '#d97706' }}></i>}
                                     </button>
                                 )}
@@ -336,8 +338,8 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                     <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '12px', width: '100%', maxWidth: '400px', position: 'relative', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
                         <span className="close" onClick={() => setModalLoginAberto(false)} style={{ position: 'absolute', top: '14px', right: '18px', cursor: 'pointer', fontSize: '1.5rem', color: '#64748b' }}>&times;</span>
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <img src={logoImg} alt="Logo SAEP" style={{ height: '40px', margin: '0 auto 0.75rem auto', display: 'block' }} />
-                            <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>Acesso ao SAEP</h2>
+                            <img src={logoImg} alt="Logo Radar 2030" style={{ height: '40px', margin: '0 auto 0.75rem auto', display: 'block' }} />
+                            <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>Acesso ao Radar 2030</h2>
                             <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>Sistema de Ações Estratégicas do PETRANS</p>
                         </div>
                         <form onSubmit={handleLoginSubmit}>

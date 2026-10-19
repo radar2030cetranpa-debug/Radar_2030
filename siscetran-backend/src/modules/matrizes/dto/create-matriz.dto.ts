@@ -19,7 +19,10 @@ export class AcaoEtapaDto {
   @IsNotEmpty()
   acaoId: string;
 
-  @ApiProperty({ example: [{ titulo: 'Levantar requisitos', concluida: false }], required: false })
+  @ApiProperty({
+    example: [{ titulo: 'Levantar requisitos', concluida: false }],
+    required: false,
+  })
   @IsArray()
   @IsOptional()
   etapas?: unknown[];
@@ -31,35 +34,35 @@ export class CreateMatrizDto {
   @IsNotEmpty()
   nome: string;
 
-  @ApiProperty({ example: 'Descrever a ação a ser executada' })
+  @ApiProperty({ example: 'Descrever a ação a ser executada' , required: false })
   @IsString()
-  @IsNotEmpty()
-  oque: string;
+  @IsOptional()
+  oque?: string;
 
-  @ApiProperty({ example: 'Justificativa da ação' })
+  @ApiProperty({ example: 'Justificativa da ação' , required: false })
   @IsString()
-  @IsNotEmpty()
-  porque: string;
+  @IsOptional()
+  porque?: string;
 
-  @ApiProperty({ example: 'Metodologia de execução' })
+  @ApiProperty({ example: 'Metodologia de execução' , required: false })
   @IsString()
-  @IsNotEmpty()
-  como: string;
+  @IsOptional()
+  como?: string;
 
-  @ApiProperty({ example: '2025-12-31' })
+  @ApiProperty({ example: '2025-12-31' , required: false })
   @IsString()
-  @IsNotEmpty()
-  quando: string;
+  @IsOptional()
+  quando?: string;
 
-  @ApiProperty({ example: 'Belém, PA' })
+  @ApiProperty({ example: 'Belém, PA' , required: false })
   @IsString()
-  @IsNotEmpty()
-  onde: string;
+  @IsOptional()
+  onde?: string;
 
-  @ApiProperty({ example: 'R$ 1.500,00' })
+  @ApiProperty({ example: 'R$ 1.500,00' , required: false })
   @IsString()
-  @IsNotEmpty()
-  quanto: string;
+  @IsOptional()
+  quanto?: string;
 
   @ApiProperty({ enum: Impacto, default: Impacto.MEDIO, required: false })
   @IsEnum(Impacto)

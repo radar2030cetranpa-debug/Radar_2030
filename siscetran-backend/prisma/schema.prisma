@@ -65,12 +65,12 @@ model Voto {
 model Matriz {
   id               String        @id
   nome             String
-  oque             String
-  porque           String
-  como             String
-  quando           String
-  onde             String
-  quanto           String
+  oque             String?
+  porque           String?
+  como             String?
+  quando           String?
+  onde             String?
+  quanto           String?
   impacto          Impacto       @default(MEDIO)
   observacao       String?
   percentual       Int           @default(0)

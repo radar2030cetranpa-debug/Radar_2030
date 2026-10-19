@@ -7,7 +7,10 @@ export class VotarMatrizDto {
   @IsEnum(TipoVoto)
   voto: TipoVoto;
 
-  @ApiProperty({ example: 'Concordo com a proposta, mas sugiro revisar o prazo.', required: false })
+  @ApiProperty({
+    example: 'Concordo com a proposta, mas sugiro revisar o prazo.',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   comentario?: string;

@@ -43,7 +43,12 @@ export class AuthService {
       return null;
     }
 
-    const { senha: _, resetToken: __, resetTokenExpiry: ___, ...result } = usuario;
+    const {
+      senha: _,
+      resetToken: __,
+      resetTokenExpiry: ___,
+      ...result
+    } = usuario;
     return result;
   }
 
@@ -54,7 +59,9 @@ export class AuthService {
     }
 
     if (!usuario.ativo) {
-      throw new UnauthorizedException('Usuário desativado. Entre em contato com o administrador.');
+      throw new UnauthorizedException(
+        'Usuário desativado. Entre em contato com o administrador.',
+      );
     }
 
     const senhaExpirada =
@@ -93,7 +100,9 @@ export class AuthService {
     const roleFinal = role || 'USUARIO';
 
     if ((roleFinal === 'USUARIO' || roleFinal === 'ADMIN_SETOR') && !setor) {
-      throw new BadRequestException('O campo "setor" é obrigatório para este perfil');
+      throw new BadRequestException(
+        'O campo "setor" é obrigatório para este perfil',
+      );
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
@@ -108,7 +117,12 @@ export class AuthService {
       },
     });
 
-    const { senha: _, resetToken: __, resetTokenExpiry: ___, ...result } = usuario;
+    const {
+      senha: _,
+      resetToken: __,
+      resetTokenExpiry: ___,
+      ...result
+    } = usuario;
     return result;
   }
 
@@ -129,7 +143,9 @@ export class AuthService {
   }
 
   async trocarSenha(userId: string, dto: TrocarSenhaDto) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: userId } });
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+    });
 
     if (!usuario) {
       throw new NotFoundException('Usuário não encontrado');
@@ -153,12 +169,6 @@ export class AuthService {
     return { message: 'Senha alterada com sucesso' };
   }
 
-  /**
-   * Fluxo de recuperação de senha (MOCK).
-   * Em produção, o token seria enviado por e-mail via um provedor real
-   * (SES, SendGrid, etc). Aqui ele é apenas logado no console e retornado
-   * na resposta quando fora de produção, para facilitar testes.
-   */
   async recuperarSenha(dto: RecuperarSenhaDto) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
@@ -166,7 +176,9 @@ export class AuthService {
 
     // Não revela se o e-mail existe ou não, por segurança.
     if (!usuario) {
-      return { message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
+      return {
+        message: 'Se o e-mail existir, um link de recuperação foi enviado.',
+      };
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -233,6 +245,8 @@ export class AuthService {
       },
     });
 
-    return { message: 'Senha redefinida com sucesso. Faça login com a nova senha.' };
+    return {
+      message: 'Senha redefinida com sucesso. Faça login com a nova senha.',
+    };
   }
 }

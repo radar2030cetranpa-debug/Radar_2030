@@ -9,11 +9,7 @@ import { jwtConfig } from '../../config/jwt.config';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register(jwtConfig),
-    PrismaModule,
-  ],
+  imports: [PassportModule, JwtModule.register(jwtConfig), PrismaModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
   exports: [AuthService],

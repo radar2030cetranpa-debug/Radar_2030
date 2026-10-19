@@ -8,10 +8,18 @@ export class DashboardService {
 
   async getKpis() {
     const total = await this.prisma.matriz.count();
-    const aprovados = await this.prisma.matriz.count({ where: { status: Status.APROVADO } });
-    const pendentes = await this.prisma.matriz.count({ where: { status: Status.PENDENTE } });
-    const enviados = await this.prisma.matriz.count({ where: { status: Status.ENVIADO } });
-    const rascunhos = await this.prisma.matriz.count({ where: { status: Status.RASCUNHO } });
+    const aprovados = await this.prisma.matriz.count({
+      where: { status: Status.APROVADO },
+    });
+    const pendentes = await this.prisma.matriz.count({
+      where: { status: Status.PENDENTE },
+    });
+    const enviados = await this.prisma.matriz.count({
+      where: { status: Status.ENVIADO },
+    });
+    const rascunhos = await this.prisma.matriz.count({
+      where: { status: Status.RASCUNHO },
+    });
 
     const resultado = await this.prisma.matriz.aggregate({
       _avg: { percentual: true },

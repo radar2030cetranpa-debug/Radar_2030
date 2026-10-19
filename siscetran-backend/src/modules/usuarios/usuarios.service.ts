@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -74,8 +75,13 @@ export class UsuariosService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.setor !== solicitante.setor) {
-      throw new ForbiddenException('Você só pode visualizar usuários do seu setor');
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.setor !== solicitante.setor
+    ) {
+      throw new ForbiddenException(
+        'Você só pode visualizar usuários do seu setor',
+      );
     }
 
     return usuario;
@@ -89,7 +95,9 @@ export class UsuariosService {
     // ADMIN_SETOR não pode criar ADMIN_GERAL nem outro ADMIN_SETOR de outro setor.
     if (solicitante.role === Role.ADMIN_SETOR) {
       if (role === Role.ADMIN_GERAL) {
-        throw new ForbiddenException('Admin de setor não pode criar um Admin Geral');
+        throw new ForbiddenException(
+          'Admin de setor não pode criar um Admin Geral',
+        );
       }
     }
 
@@ -97,7 +105,9 @@ export class UsuariosService {
       solicitante.role === Role.ADMIN_SETOR ? solicitante.setor : setor;
 
     if ((role === Role.USUARIO || role === Role.ADMIN_SETOR) && !setorFinal) {
-      throw new BadRequestException('O campo "setor" é obrigatório para este perfil');
+      throw new BadRequestException(
+        'O campo "setor" é obrigatório para este perfil',
+      );
     }
 
     const usuarioExistente = await this.prisma.usuario.findUnique({
@@ -108,7 +118,12 @@ export class UsuariosService {
       throw new ConflictException('E-mail já cadastrado');
     }
 
-    const senhaHash = await bcrypt.hash(senha, 10);
+    const senhaFinal = senha || crypto.randomBytes(16).toString('hex') + 'A1!';
+    const senhaHash = await bcrypt.hash(senhaFinal, 10);
+    const resetToken = !senha ? crypto.randomBytes(32).toString('hex') : null;
+    const resetTokenExpiry = !senha
+      ? new Date(Date.now() + 48 * 60 * 60 * 1000)
+      : null;
 
     const usuario = await this.prisma.usuario.create({
       data: {
@@ -116,22 +131,40 @@ export class UsuariosService {
         senha: senhaHash,
         role,
         setor: setorFinal,
+        resetToken,
+        resetTokenExpiry,
         ultimaTrocaSenha: new Date(),
       },
-      select: this.selectPadrao,
+      select: {
+        ...this.selectPadrao,
+        resetToken: true,
+      },
     });
+
+    if (resetToken) {
+      console.log(
+        `[CONVITE / PRIMEIRO ACESSO] Link de definição de senha para ${usuario.email}: /?token=${resetToken}#definir-senha`,
+      );
+    }
 
     return usuario;
   }
 
-  async update(id: string, updateUsuarioDto: UpdateUsuarioDto, solicitante: UsuarioLogado) {
+  async update(
+    id: string,
+    updateUsuarioDto: UpdateUsuarioDto,
+    solicitante: UsuarioLogado,
+  ) {
     const usuario = await this.prisma.usuario.findUnique({ where: { id } });
 
     if (!usuario) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.setor !== solicitante.setor) {
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.setor !== solicitante.setor
+    ) {
       throw new ForbiddenException('Você só pode editar usuários do seu setor');
     }
 
@@ -167,7 +200,11 @@ export class UsuariosService {
     return usuarioAtualizado;
   }
 
-  async updateRole(id: string, updateRoleDto: UpdateRoleDto, solicitante: UsuarioLogado) {
+  async updateRole(
+    id: string,
+    updateRoleDto: UpdateRoleDto,
+    solicitante: UsuarioLogado,
+  ) {
     const usuario = await this.prisma.usuario.findUnique({ where: { id } });
 
     if (!usuario) {
@@ -176,10 +213,14 @@ export class UsuariosService {
 
     if (solicitante.role === Role.ADMIN_SETOR) {
       if (usuario.setor !== solicitante.setor) {
-        throw new ForbiddenException('Você só pode alterar usuários do seu setor');
+        throw new ForbiddenException(
+          'Você só pode alterar usuários do seu setor',
+        );
       }
       if (updateRoleDto.role === Role.ADMIN_GERAL) {
-        throw new ForbiddenException('Admin de setor não pode promover a Admin Geral');
+        throw new ForbiddenException(
+          'Admin de setor não pode promover a Admin Geral',
+        );
       }
     }
 
@@ -206,23 +247,39 @@ export class UsuariosService {
     return this.alterarStatus(id, true, solicitante);
   }
 
-  private async alterarStatus(id: string, ativo: boolean, solicitante: UsuarioLogado) {
+  private async alterarStatus(
+    id: string,
+    ativo: boolean,
+    solicitante: UsuarioLogado,
+  ) {
     const usuario = await this.prisma.usuario.findUnique({ where: { id } });
 
     if (!usuario) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.setor !== solicitante.setor) {
-      throw new ForbiddenException('Você só pode ativar/desativar usuários do seu setor');
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.setor !== solicitante.setor
+    ) {
+      throw new ForbiddenException(
+        'Você só pode ativar/desativar usuários do seu setor',
+      );
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.role === Role.ADMIN_GERAL) {
-      throw new ForbiddenException('Admin de setor não pode ativar/desativar um Admin Geral');
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.role === Role.ADMIN_GERAL
+    ) {
+      throw new ForbiddenException(
+        'Admin de setor não pode ativar/desativar um Admin Geral',
+      );
     }
 
     if (usuario.id === solicitante.id) {
-      throw new BadRequestException('Você não pode ativar/desativar a própria conta');
+      throw new BadRequestException(
+        'Você não pode ativar/desativar a própria conta',
+      );
     }
 
     const usuarioAtualizado = await this.prisma.usuario.update({
@@ -241,12 +298,22 @@ export class UsuariosService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.setor !== solicitante.setor) {
-      throw new ForbiddenException('Você só pode remover usuários do seu setor');
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.setor !== solicitante.setor
+    ) {
+      throw new ForbiddenException(
+        'Você só pode remover usuários do seu setor',
+      );
     }
 
-    if (solicitante.role === Role.ADMIN_SETOR && usuario.role === Role.ADMIN_GERAL) {
-      throw new ForbiddenException('Admin de setor não pode remover um Admin Geral');
+    if (
+      solicitante.role === Role.ADMIN_SETOR &&
+      usuario.role === Role.ADMIN_GERAL
+    ) {
+      throw new ForbiddenException(
+        'Admin de setor não pode remover um Admin Geral',
+      );
     }
 
     const matrizes = await this.prisma.matriz.count({

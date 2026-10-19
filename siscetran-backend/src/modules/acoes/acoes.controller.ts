@@ -34,11 +34,23 @@ export class AcoesController {
   @Get()
   @ApiOperation({ summary: 'Listar todas as ações estratégicas' })
   @ApiResponse({ status: 200, description: 'Lista de ações retornada' })
-  @ApiQuery({ name: 'busca', required: false, description: 'Buscar por ID, diretriz ou setor' })
+  @ApiQuery({
+    name: 'busca',
+    required: false,
+    description: 'Buscar por ID, diretriz ou setor',
+  })
   @ApiQuery({ name: 'og', required: false, description: 'Filtrar por OG' })
   @ApiQuery({ name: 'lae', required: false, description: 'Filtrar por LAE' })
-  @ApiQuery({ name: 'setor', required: false, description: 'Filtrar por setor' })
-  @ApiQuery({ name: 'prazo', required: false, description: 'Filtrar por prazo' })
+  @ApiQuery({
+    name: 'setor',
+    required: false,
+    description: 'Filtrar por setor',
+  })
+  @ApiQuery({
+    name: 'prazo',
+    required: false,
+    description: 'Filtrar por prazo',
+  })
   async findAll(
     @Query('busca') busca?: string,
     @Query('og') og?: string,

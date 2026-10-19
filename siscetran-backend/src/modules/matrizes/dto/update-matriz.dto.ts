@@ -14,7 +14,10 @@ import { Impacto } from '@prisma/client';
 import { AcaoEtapaDto } from './create-matriz.dto';
 
 export class UpdateMatrizDto {
-  @ApiProperty({ example: 'Modernização da Frota de Fiscalização', required: false })
+  @ApiProperty({
+    example: 'Modernização da Frota de Fiscalização',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   nome?: string;

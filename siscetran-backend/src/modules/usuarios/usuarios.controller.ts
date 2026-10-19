@@ -35,7 +35,9 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar usuários (escopo por setor para Admin de Setor)' })
+  @ApiOperation({
+    summary: 'Listar usuários (escopo por setor para Admin de Setor)',
+  })
   @ApiResponse({ status: 200, description: 'Lista de usuários retornada' })
   @ApiQuery({ name: 'busca', required: false, description: 'Buscar por email' })
   async findAll(@Query('busca') busca: string, @Request() req: any) {
@@ -54,7 +56,10 @@ export class UsuariosController {
   @ApiOperation({ summary: 'Criar novo usuário' })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @ApiResponse({ status: 409, description: 'E-mail já cadastrado' })
-  async create(@Body() createUsuarioDto: CreateUsuarioDto, @Request() req: any) {
+  async create(
+    @Body() createUsuarioDto: CreateUsuarioDto,
+    @Request() req: any,
+  ) {
     return this.usuariosService.create(createUsuarioDto, req.user);
   }
 
@@ -99,7 +104,9 @@ export class UsuariosController {
 
   @Delete(':id')
   @Roles(Role.ADMIN_GERAL)
-  @ApiOperation({ summary: 'Remover usuário definitivamente (apenas Admin Geral)' })
+  @ApiOperation({
+    summary: 'Remover usuário definitivamente (apenas Admin Geral)',
+  })
   @ApiResponse({ status: 204, description: 'Usuário removido' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async remove(@Param('id') id: string, @Request() req: any) {

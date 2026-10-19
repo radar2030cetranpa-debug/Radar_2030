@@ -12,9 +12,11 @@ import { PainelAndamento } from './pages/PainelAndamento';
 import { TrocarSenha } from './pages/TrocarSenha';
 import { RecuperarSenha } from './pages/RecuperarSenha';
 import { SuporteTecnico } from './pages/SuporteTecnico';
+import { DashboardEstrategico } from './pages/DashboardEstrategico';
 
 const TELAS = {
     HOME: 'home',
+    DASHBOARD: 'dashboard',
     ACOES: 'acoes',
     FORMULARIO: 'formulario',
     CONSULTAR: 'consultar',
@@ -28,7 +30,8 @@ const TELAS = {
 
 export default function App() {
     const [usuarioLogado, setUsuarioLogado] = useState(usuarioEmCache());
-    const [telaAtual, setTelaAtual] = useState(TELAS.HOME);
+    const tokenInicial = new URLSearchParams(window.location.search).get('token') || '';
+    const [telaAtual, setTelaAtual] = useState(tokenInicial ? TELAS.RECUPERAR_SENHA : TELAS.HOME);
 
     // Ref para saber se o usuário estava deslogado no render anterior.
     // Assim só redirecionamos para o painel quando ocorrer uma transição null -> usuário.
@@ -86,6 +89,8 @@ export default function App() {
                         telas={TELAS}
                     />
                 );
+            case TELAS.DASHBOARD:
+                return <DashboardEstrategico usuarioLogado={usuarioLogado} />;
             case TELAS.ACOES:
                 return (
                     <AcoesEstrategicas
@@ -115,7 +120,7 @@ export default function App() {
             case TELAS.TROCAR_SENHA:
                 return <TrocarSenha onVoltar={() => setTelaAtual(TELAS.HOME)} />;
             case TELAS.RECUPERAR_SENHA:
-                return <RecuperarSenha onVoltar={() => setTelaAtual(TELAS.HOME)} />;
+                return <RecuperarSenha tokenInicial={tokenInicial} onVoltar={() => setTelaAtual(TELAS.HOME)} />;
             case TELAS.SUPORTE:
                 return <SuporteTecnico onVoltar={() => setTelaAtual(usuarioLogado ? TELAS.HOME : TELAS.RECUPERAR_SENHA)} />;
             default:

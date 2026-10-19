@@ -13,8 +13,6 @@ import { VotarMatrizDto } from './dto/votar-matriz.dto';
 import { AtualizarProgressoDto } from './dto/atualizar-progresso.dto';
 import { Status, Role, Prisma } from '@prisma/client';
 
-
-
 interface UsuarioLogado {
   id: string;
   role: Role;
@@ -26,9 +24,33 @@ function gerarIdMatriz(): string {
     const codigo = 65 + Math.floor(Math.random() * 26);
     return String.fromCharCode(codigo);
   }).join('');
-  const numeros = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+  const numeros = Math.floor(Math.random() * 100)
+    .toString()
+    .padStart(2, '0');
 
   return `${letras}${numeros}`;
+}
+
+/**
+ * Garante o formato Etapa -> Tarefas (5W2H por tarefa) antes de gravar o JSON.
+ * Etapas legadas (sem "tarefas") continuam aceitas.
+ */
+function validarEtapas(etapas: unknown[] | undefined): unknown[] {
+  const lista = etapas ?? [];
+  for (const etapa of lista) {
+    if (!etapa || typeof etapa !== 'object' || Array.isArray(etapa)) {
+      throw new BadRequestException('Etapa inválida');
+    }
+    const { tarefas } = etapa as { tarefas?: unknown };
+    if (tarefas === undefined) continue;
+    if (
+      !Array.isArray(tarefas) ||
+      tarefas.some((t) => !t || typeof t !== 'object' || Array.isArray(t))
+    ) {
+      throw new BadRequestException('As tarefas da etapa são inválidas');
+    }
+  }
+  return lista;
 }
 
 @Injectable()
@@ -42,7 +64,9 @@ export class MatrizesService {
     criadoPor: { select: { id: true, email: true, setor: true } },
     avaliadoPor: { select: { id: true, email: true } },
     acoes: { include: { acao: true } },
-    votos: { include: { usuario: { select: { id: true, email: true, role: true } } } },
+    votos: {
+      include: { usuario: { select: { id: true, email: true, role: true } } },
+    },
   };
 
   private async obterRevisaoAtual(matrizId: string) {
@@ -52,13 +76,19 @@ export class MatrizesService {
     });
 
     if (!revisao) {
-      throw new BadRequestException('Não existe revisão ativa para esta matriz');
+      throw new BadRequestException(
+        'Não existe revisão ativa para esta matriz',
+      );
     }
 
     return revisao;
   }
 
-  async findAll(status: Status | undefined, solicitante: UsuarioLogado, usuarioId?: string) {
+  async findAll(
+    status: Status | undefined,
+    solicitante: UsuarioLogado,
+    usuarioId?: string,
+  ) {
     const where: any = {};
 
     if (status) {
@@ -76,7 +106,11 @@ export class MatrizesService {
     }
 
     // COMITE e ADMIN_GERAL enxergam todas; filtro opcional por usuário criador.
-    if (usuarioId && (solicitante.role === Role.COMITE || solicitante.role === Role.ADMIN_GERAL)) {
+    if (
+      usuarioId &&
+      (solicitante.role === Role.COMITE ||
+        solicitante.role === Role.ADMIN_GERAL)
+    ) {
       where.criadoPorId = usuarioId;
     }
 
@@ -99,15 +133,22 @@ export class MatrizesService {
       throw new NotFoundException('Matriz não encontrada');
     }
 
-    if (solicitante.role === Role.USUARIO && matriz.criadoPorId !== solicitante.id) {
-      throw new ForbiddenException('Você não tem permissão para visualizar esta matriz');
+    if (
+      solicitante.role === Role.USUARIO &&
+      matriz.criadoPorId !== solicitante.id
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para visualizar esta matriz',
+      );
     }
 
     if (
       solicitante.role === Role.ADMIN_SETOR &&
       matriz.criadoPor.setor !== solicitante.setor
     ) {
-      throw new ForbiddenException('Você não tem permissão para visualizar esta matriz');
+      throw new ForbiddenException(
+        'Você não tem permissão para visualizar esta matriz',
+      );
     }
 
     return matriz;
@@ -134,7 +175,12 @@ export class MatrizesService {
         criadoPorId: userId,
         acoes:
           acoes && acoes.length > 0
-            ? { create: acoes.map((a) => ({ acaoId: a.acaoId, etapas: (a.etapas ?? []) as Prisma.InputJsonValue })) }
+            ? {
+                create: acoes.map((a) => ({
+                  acaoId: a.acaoId,
+                  etapas: validarEtapas(a.etapas) as Prisma.InputJsonValue,
+                })),
+              }
             : undefined,
       },
       include: this.includeCompleto,
@@ -149,7 +195,10 @@ export class MatrizesService {
     return matriz;
   }
 
-  private async verificarPermissaoEdicao(matrizId: string, solicitante: UsuarioLogado) {
+  private async verificarPermissaoEdicao(
+    matrizId: string,
+    solicitante: UsuarioLogado,
+  ) {
     const matriz = await this.prisma.matriz.findUnique({
       where: { id: matrizId },
       include: { criadoPor: { select: { setor: true } } },
@@ -159,8 +208,13 @@ export class MatrizesService {
       throw new NotFoundException('Matriz não encontrada');
     }
 
-    if (solicitante.role === Role.USUARIO && matriz.criadoPorId !== solicitante.id) {
-      throw new ForbiddenException('Você não tem permissão para editar esta matriz');
+    if (
+      solicitante.role === Role.USUARIO &&
+      matriz.criadoPorId !== solicitante.id
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para editar esta matriz',
+      );
     }
 
     if (
@@ -173,25 +227,55 @@ export class MatrizesService {
     return matriz;
   }
 
-  async update(id: string, updateMatrizDto: UpdateMatrizDto, solicitante: UsuarioLogado) {
+  async update(
+    id: string,
+    updateMatrizDto: UpdateMatrizDto,
+    solicitante: UsuarioLogado,
+  ) {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
 
     if (matriz.status === Status.ENVIADO || matriz.status === Status.APROVADO) {
-      throw new BadRequestException('Matriz já enviada ou aprovada não pode ser editada');
+      throw new BadRequestException(
+        'Matriz já enviada ou aprovada não pode ser editada',
+      );
     }
 
     const { acoes, ...dados } = updateMatrizDto;
 
-    let acoesUpdate: { create: { acaoId: string; etapas: Prisma.InputJsonValue }[] } | undefined = undefined;
+    // Valida tudo ANTES de mexer no banco: se algo estiver errado, nada é apagado.
+    let acoesUpdate:
+      | { create: { acaoId: string; etapas: Prisma.InputJsonValue }[] }
+      | undefined = undefined;
     if (acoes) {
-      await this.prisma.acoesMatriz.deleteMany({ where: { matrizId: id } });
-      acoesUpdate = { create: acoes.map((a) => ({ acaoId: a.acaoId, etapas: (a.etapas ?? []) as Prisma.InputJsonValue })) };
+      const novas = acoes.map((a) => ({
+        acaoId: a.acaoId,
+        etapas: validarEtapas(a.etapas) as Prisma.InputJsonValue,
+      }));
+
+      const ids = [...new Set(novas.map((a) => a.acaoId))];
+      if (ids.length > 0) {
+        const existentes = await this.prisma.acao.count({
+          where: { id: { in: ids } },
+        });
+        if (existentes !== ids.length) {
+          throw new BadRequestException('Uma ou mais ações não existem');
+        }
+      }
+
+      acoesUpdate = { create: novas };
     }
 
-    const matrizAtualizada = await this.prisma.matriz.update({
-      where: { id },
-      data: { ...dados, acoes: acoesUpdate },
-      include: this.includeCompleto,
+    // Apagar as ações antigas e gravar as novas na mesma transação: se a gravação
+    // falhar, a matriz continua com as ações que já tinha.
+    const matrizAtualizada = await this.prisma.$transaction(async (tx) => {
+      if (acoesUpdate) {
+        await tx.acoesMatriz.deleteMany({ where: { matrizId: id } });
+      }
+      return tx.matriz.update({
+        where: { id },
+        data: { ...dados, acoes: acoesUpdate },
+        include: this.includeCompleto,
+      });
     });
 
     await this.logsService.create({
@@ -207,7 +291,9 @@ export class MatrizesService {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
 
     if (matriz.status === Status.ENVIADO || matriz.status === Status.APROVADO) {
-      throw new BadRequestException('Matriz já enviada ou aprovada não pode ser removida');
+      throw new BadRequestException(
+        'Matriz já enviada ou aprovada não pode ser removida',
+      );
     }
 
     await this.prisma.acoesMatriz.deleteMany({ where: { matrizId: id } });
@@ -230,7 +316,9 @@ export class MatrizesService {
     }
 
     if (matriz.criadoPorId !== userId) {
-      throw new ForbiddenException('Você só pode enviar suas próprias matrizes');
+      throw new ForbiddenException(
+        'Você só pode enviar suas próprias matrizes',
+      );
     }
 
     if (matriz.status === Status.ENVIADO) {
@@ -258,7 +346,10 @@ export class MatrizesService {
           criadoPorId: userId,
         },
       });
-    } else if (matriz.status === Status.RASCUNHO && (!revisaoAtual || revisaoAtual._count.votos === 0)) {
+    } else if (
+      matriz.status === Status.RASCUNHO &&
+      (!revisaoAtual || revisaoAtual._count.votos === 0)
+    ) {
       // Primeira submissão real. Se já existe uma revisão vazia (ex: placeholder
       // criado pelo backfill de migração para matrizes antigas), reaproveita ela
       // em vez de criar uma segunda revisão sem voto nenhum.
@@ -273,9 +364,12 @@ export class MatrizesService {
       }
     }
 
-    const numeroRevisaoFinal = (matriz.status === Status.RASCUNHO && revisaoAtual && revisaoAtual._count.votos === 0)
-      ? revisaoAtual.numero
-      : proximoNumero;
+    const numeroRevisaoFinal =
+      matriz.status === Status.RASCUNHO &&
+      revisaoAtual &&
+      revisaoAtual._count.votos === 0
+        ? revisaoAtual.numero
+        : proximoNumero;
 
     const matrizAtualizada = await this.prisma.matriz.update({
       where: { id },
@@ -286,7 +380,7 @@ export class MatrizesService {
     await this.logsService.create({
       usuarioId: userId,
       acao: 'ENVIAR_MATRIZ',
-      detalhes: `Enviou a matriz ${matrizAtualizada.id} - ${matrizAtualizada.nome} para o comitê (revisão ${numeroRevisaoFinal})`,
+      detalhes: `Enviou a matriz ${matrizAtualizada.id} - ${matrizAtualizada.nome} ao Comitê Gestor (revisão ${numeroRevisaoFinal})`,
     });
 
     return matrizAtualizada;
@@ -297,7 +391,11 @@ export class MatrizesService {
    * Não decide o status da matriz — é apenas um registro consultivo,
    * visível para o Admin Geral na hora da decisão final.
    */
-  async votar(id: string, votarMatrizDto: VotarMatrizDto, solicitante: UsuarioLogado) {
+  async votar(
+    id: string,
+    votarMatrizDto: VotarMatrizDto,
+    solicitante: UsuarioLogado,
+  ) {
     const matriz = await this.prisma.matriz.findUnique({ where: { id } });
 
     if (!matriz) {
@@ -305,7 +403,9 @@ export class MatrizesService {
     }
 
     if (matriz.status !== Status.ENVIADO) {
-      throw new BadRequestException('Apenas matrizes enviadas podem receber votos');
+      throw new BadRequestException(
+        'Apenas matrizes enviadas podem receber votos',
+      );
     }
 
     const revisao = await this.obterRevisaoAtual(id);
@@ -347,7 +447,11 @@ export class MatrizesService {
    * Decisão final — apenas Admin Geral. Define definitivamente o status
    * da matriz (APROVADO ou PENDENTE), independente da contagem de votos.
    */
-  async avaliar(id: string, avaliarMatrizDto: AvaliarMatrizDto, userId: string) {
+  async avaliar(
+    id: string,
+    avaliarMatrizDto: AvaliarMatrizDto,
+    userId: string,
+  ) {
     const matriz = await this.prisma.matriz.findUnique({ where: { id } });
 
     if (!matriz) {
@@ -355,7 +459,9 @@ export class MatrizesService {
     }
 
     if (matriz.status !== Status.ENVIADO) {
-      throw new BadRequestException('Apenas matrizes enviadas podem ser avaliadas');
+      throw new BadRequestException(
+        'Apenas matrizes enviadas podem ser avaliadas',
+      );
     }
 
     const matrizAtualizada = await this.prisma.matriz.update({
@@ -378,11 +484,17 @@ export class MatrizesService {
     return matrizAtualizada;
   }
 
-  async atualizarProgresso(id: string, dto: AtualizarProgressoDto, solicitante: UsuarioLogado) {
+  async atualizarProgresso(
+    id: string,
+    dto: AtualizarProgressoDto,
+    solicitante: UsuarioLogado,
+  ) {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
 
     if (matriz.status !== Status.APROVADO) {
-      throw new BadRequestException('Apenas matrizes aprovadas podem ter seu progresso atualizado');
+      throw new BadRequestException(
+        'Apenas matrizes aprovadas podem ter seu progresso atualizado',
+      );
     }
 
     if (dto.acoes && dto.acoes.length > 0) {
@@ -395,12 +507,12 @@ export class MatrizesService {
             },
           },
           update: {
-            etapas: (item.etapas ?? []) as Prisma.InputJsonValue,
+            etapas: validarEtapas(item.etapas) as Prisma.InputJsonValue,
           },
           create: {
             matrizId: id,
             acaoId: item.acaoId,
-            etapas: (item.etapas ?? []) as Prisma.InputJsonValue,
+            etapas: validarEtapas(item.etapas) as Prisma.InputJsonValue,
           },
         });
       }

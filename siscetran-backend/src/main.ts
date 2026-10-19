@@ -11,8 +11,24 @@ async function bootstrap() {
   app.use(helmet());
 
   // CORS
+  const configuredOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+    : [];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        configuredOrigins.includes('*') ||
+        configuredOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+        /\.netlify\.app$/.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   });
 
@@ -30,7 +46,7 @@ async function bootstrap() {
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle('SISCETRAN API')
+    .setTitle('Radar 2030 API')
     .setDescription('API do Sistema de Ações Estratégicas do PETRANS')
     .setVersion('1.0')
     .addBearerAuth()
@@ -48,7 +64,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  console.log(`🚀 SISCETRAN API rodando em: http://localhost:${port}`);
+  console.log(`🚀 Radar 2030 API rodando em: http://localhost:${port}`);
   console.log(`📚 Documentação Swagger: http://localhost:${port}/api/docs`);
 }
 bootstrap();

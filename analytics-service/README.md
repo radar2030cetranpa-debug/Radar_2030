@@ -1,34 +1,55 @@
-# SAEP - Serviço Analítico (FastAPI)
+# SAEP - Serviço Analítico (FastAPI / Python)
 
-Este serviço é responsável por realizar consultas, cálculos estatísticos e fornecer indicadores para o Dashboard do SAEP.
+Motor de inteligência estatística e consolidação em cascata do **SAEP (Sistema de Ações Estratégicas do PETRANS)** para o **CETRAN-PA**.
 
-## Inventário de Dados
+---
 
-### 1. Tabela/Modelo: `Acao`
-- **id**: Identificador único da Ação (String)
-- **og**: Objetivo Geral (String)
-- **lae**: Linha de Ação Estratégica (String)
-- **setor**: Setor responsável pela ação (String)
-- **prazo**: Classificação do prazo - CURTO_PRAZO, MEDIO_PRAZO, LONGO_PRAZO (Enum)
-- **responsavel**: Nome do responsável (String)
-- **matrizes**: Relacionamento com a tabela de ligação AcoesMatriz
+## 🚀 Como Executar
 
-### 2. Tabela/Modelo: `Matriz`
-- **id**: Identificador único da Matriz (String)
-- **nome**: Nome da matriz (String)
-- **percentual**: Progresso de execução de 0 a 100 (Int)
-- **status**: Situação cadastral - RASCUNHO, ENVIADO, APROVADO, PENDENTE (Enum)
-- **impacto**: Nível de impacto - BAIXO, MEDIO, ALTO (Enum)
-- **dataCriacao**: Data de criação do registro (DateTime)
-- **dataAvaliacao**: Data em que foi avaliada (DateTime)
-- **acoes**: Relacionamento com a tabela de ligação AcoesMatriz
+1. Crie e ative o ambiente virtual:
+   ```bash
+   cd analytics-service
+   python3 -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # ou: venv\Scripts\activate no Windows
+   ```
 
-### 3. Tabela/Modelo: `AcoesMatriz`
-- **id**: Identificador da ligação (String)
-- **matrizId**: ID da Matriz (Chave estrangeira)
-- **acaoId**: ID da Ação (Chave estrangeira)
+2. Instale as dependências:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 4. Tabela/Modelo: `Usuario`
-- **id**: Identificador único do usuário (String)
-- **setor**: Setor do usuário (String)
-- **role**: Perfil - USUARIO, COMITE, ADMIN_SETOR, ADMIN_GERAL (Enum)
+3. Configure a variável `DATABASE_URL` no arquivo `.env`:
+   ```env
+   DATABASE_URL="postgresql://usuario:senha@host:5432/banco"
+   ```
+
+4. Inicie o servidor FastAPI:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+5. Acesse a documentação interativa Swagger:
+   - **Swagger UI**: `http://localhost:8000/docs`
+   - **Redoc**: `http://localhost:8000/redoc`
+
+---
+
+## 📊 As 5 Visões Analíticas (Endpoints REST)
+
+| Endpoint | Visão | Descrição |
+|---|---|---|
+| `GET /analytics/resumo` | **Resumo Integrado** | KPIs gerais e resumo executivo unificado das 5 visões com suporte a `?setor=...`. |
+| `GET /analytics/eixos` | **Visão 1: Avanço por Eixos** | Percentual consolidado dos **4 Eixos** centrais do PETRANS e distribuição de status. |
+| `GET /analytics/projetos` | **Visão 2: Todos os Projetos** | Progresso dos **21 Projetos** com flag e destaque para os **8 Projetos Estratégicos** (`isEstrategico`). |
+| `GET /analytics/objetivos` | **Visão 3: Objetivos & Linhas** | Agrupamento por **Objetivos Gerais (OG)** e **Linhas de Ação (LAE)** e projetos contribuintes. |
+| `GET /analytics/prazos` | **Visão 4: Horizontes de Prazo** | Métricas por **Curto Prazo** (até 12 meses), **Médio Prazo** (12-36m) e **Longo Prazo** (36m+). |
+| `GET /analytics/setores` | **Visão 5: Lente de Setor** | Desempenho dos 4 macro-setores e subsetores, com detalhamento via `?setor=...`. |
+
+---
+
+## 🧮 Lógica de Cálculo em Cascata
+
+1. **Ação**: Calculada automaticamente pela proporção de etapas marcadas como concluídas nas matrizes com status `APROVADO`.
+2. **Projetos e Objetivos**: Médias aritméticas das ações vinculadas a cada Projeto e OG.
+3. **Eixos**: Média consolidada de todas as iniciativas do Eixo correspondente.

@@ -1,4 +1,12 @@
-import { Controller, Post, Put, Body, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Put,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -10,7 +18,12 @@ import { JwtGuard } from '../../common/guards/jwt.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -21,7 +34,10 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login do usuário' })
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
-  @ApiResponse({ status: 401, description: 'Credenciais inválidas, usuário inativo ou senha expirada' })
+  @ApiResponse({
+    status: 401,
+    description: 'Credenciais inválidas, usuário inativo ou senha expirada',
+  })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
@@ -30,7 +46,9 @@ export class AuthController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN_SETOR, Role.ADMIN_GERAL)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Registrar novo usuário (admin do setor ou admin geral)' })
+  @ApiOperation({
+    summary: 'Registrar novo usuário (admin do setor ou admin geral)',
+  })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @ApiResponse({ status: 409, description: 'Usuário já existe' })
   async register(@Body() registerDto: RegisterDto) {
@@ -60,7 +78,10 @@ export class AuthController {
   @Public()
   @Post('recuperar-senha')
   @ApiOperation({ summary: 'Solicitar recuperação de senha por e-mail (mock)' })
-  @ApiResponse({ status: 200, description: 'Instruções enviadas (se o e-mail existir)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Instruções enviadas (se o e-mail existir)',
+  })
   async recuperarSenha(@Body() dto: RecuperarSenhaDto) {
     return this.authService.recuperarSenha(dto);
   }

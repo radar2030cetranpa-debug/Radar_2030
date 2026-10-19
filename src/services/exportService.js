@@ -61,7 +61,7 @@ export function exportarMatrizesAprovadasExcel(matrizes) {
         'Quanto (Custo)': reg.quanto || '',
         'Impacto': reg.impacto || '',
         'Progresso (%)': `${reg.percentual || 0}%`,
-        'Parecer do Comitê': reg.comentarioComite || '',
+        'Parecer do Comitê Gestor': reg.comentarioComite || '',
         'Data de Aprovação': reg.dataAvaliacao ? new Date(reg.dataAvaliacao).toLocaleDateString('pt-BR') : ''
     }));
 

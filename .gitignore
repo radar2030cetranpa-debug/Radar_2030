@@ -13,6 +13,13 @@ dist-ssr
 *.local
 
 analytics-service/.env
+analytics-service/venv/
+analytics-service/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
 # Editor directories and files
 .vscode/*

@@ -12,7 +12,7 @@ export const ROLES = {
 
 export const ROLE_LABELS = {
   USUARIO: 'Usuário do Setor',
-  COMITE: 'Conselheiro',
+  COMITE: 'Usuário do Comitê Gestor',
   ADMIN_SETOR: 'Admin do Setor',
   ADMIN_GERAL: 'Admin Geral',
 };
@@ -38,7 +38,7 @@ export function podeCriarMatriz() {
   return true;
 }
 
-/** Editar/Excluir: dono (USUARIO), Admin do Setor (mesmo setor) ou Admin Geral. Conselheiro nunca. */
+/** Editar/Excluir: dono (USUARIO), Admin do Setor (mesmo setor) ou Admin Geral. Usuário do Comitê Gestor nunca. */
 export function podeEditarOuExcluirMatriz(usuario, matriz) {
   if (!usuario || !matriz) return false;
   if (usuario.role === ROLES.ADMIN_GERAL) return true;
@@ -51,7 +51,7 @@ export function podeEditarOuExcluirMatriz(usuario, matriz) {
   return false;
 }
 
-/** Votar: Conselheiro e Admin Geral. */
+/** Votar: Usuário do Comitê Gestor e Admin Geral. */
 export function podeVotar(usuario) {
   return ehComiteOuAdminGeral(usuario);
 }

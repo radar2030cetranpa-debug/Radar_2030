@@ -1,4 +1,5 @@
 // src/pages/ConsultarMatrizes.jsx
+import { contarTarefas, calcularPercentualEtapas, calcularPercentualEtapa } from '../services/progresso';
 import React, { useState, useEffect, useCallback } from 'react';
 import { listarMatrizes, removerMatriz } from '../services/matrizes';
 import Swal from 'sweetalert2';
@@ -243,16 +244,9 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                         
                         <p><strong>Nome:</strong> {matrizSelecionada.nome}</p>
                         <p><strong>Autor:</strong> {matrizSelecionada.criadoPor?.email || (typeof matrizSelecionada.criadoPor === 'string' ? matrizSelecionada.criadoPor : '-')}</p>
-                        <p><strong>O quê?:</strong> {matrizSelecionada.oque}</p>
-                        <p><strong>Por quê?:</strong> {matrizSelecionada.porque}</p>
-                        <p><strong>Onde?:</strong> {matrizSelecionada.onde}</p>
-                        <p><strong>Quando?:</strong> {matrizSelecionada.quando}</p>
-                        <p><strong>Como?:</strong> {matrizSelecionada.como}</p>
-                        <p><strong>Quanto?:</strong> {matrizSelecionada.quanto || '-'}</p>
-                        <p><strong>Impacto:</strong> {matrizSelecionada.impacto || '-'}</p>
                         <p><strong>Progresso:</strong> {matrizSelecionada.percentual || 0}%</p>
                         <p><strong>Status atual:</strong> <span style={estiloBadgeStatus(matrizSelecionada.status)}>{matrizSelecionada.status}</span></p>
-                        <p><strong>Parecer do Comitê:</strong> {matrizSelecionada.comentarioComite || '-'}</p>
+                        <p><strong>Parecer do Comitê Gestor:</strong> {matrizSelecionada.comentarioComite || '-'}</p>
 
                         {/* Ações Vinculadas */}
                         {Array.isArray(matrizSelecionada.acoes) && matrizSelecionada.acoes.length > 0 && (
@@ -263,9 +257,16 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                                         <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: '#2563eb' }}>{item.acaoId} - {item.acao?.diretriz || ''}</p>
                                         <p style={{ margin: '0 0 4px 0', color: '#64748b' }}>Setor: {item.acao?.setor || '-'} | Prazo: {item.acao?.prazo || '-'}</p>
                                         {Array.isArray(item.etapas) && item.etapas.length > 0 && (
-                                            <p style={{ margin: 0, color: '#334155' }}>
-                                                Etapas concluídas: {item.etapas.filter(e => e.concluida).length} de {item.etapas.length} ({Math.round((item.etapas.filter(e => e.concluida).length / item.etapas.length) * 100)}%)
-                                            </p>
+                                            <div style={{ color: '#334155' }}>
+                                                <p style={{ margin: '0 0 4px 0' }}>
+                                                    {item.etapas.length} {item.etapas.length === 1 ? 'etapa' : 'etapas'}, {contarTarefas(item.etapas).concluidas} de {contarTarefas(item.etapas).total} tarefas concluídas ({calcularPercentualEtapas(item.etapas)}%)
+                                                </p>
+                                                <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                                                    {item.etapas.map((etapa, i) => (
+                                                        <li key={etapa.id || i}>{etapa.titulo || `Etapa ${i + 1}`}: {calcularPercentualEtapa(etapa)}%{Array.isArray(etapa.tarefas) && etapa.tarefas.length > 0 ? ` (${etapa.tarefas.length} ${etapa.tarefas.length === 1 ? 'tarefa' : 'tarefas'})` : ''}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
                                         )}
                                     </div>
                                 ))}

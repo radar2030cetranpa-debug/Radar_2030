@@ -6,13 +6,123 @@
 import { acoesEstrategicas } from './acoes_data';
 
 /**
- * Percentual de conclusão de uma lista de etapas.
- * Sem etapas definidas ainda = 0%, não "indefinido", para não quebrar médias.
+ * Modelo de detalhamento de uma Ação (Radar 2030):
+ *
+ *   Ação -> Etapas -> Tarefas, e cada Tarefa carrega seu próprio 5W2H.
+ *
+ *   etapa  = { id, titulo, impacto, observacao, tarefas: [tarefa], concluida? }
+ *   tarefa = { id, titulo, porque, quem, onde, quando, como, quanto, concluida, concluidaEm }
+ *
+ * Cada tarefa concluída representa uma parte concluída da etapa; cada etapa
+ * pesa igual dentro da ação. Etapas legadas (sem "tarefas", só com "concluida")
+ * continuam válidas e contam como 0% ou 100%.
+ */
+
+export const CAMPOS_5W2H_TAREFA = [
+    { chave: 'titulo', rotulo: 'O quê?', dica: 'Descreva com clareza a tarefa a ser realizada.', tipo: 'textarea' },
+    { chave: 'porque', rotulo: 'Por quê?', dica: 'Justifique a necessidade da tarefa.', tipo: 'textarea' },
+    { chave: 'quem', rotulo: 'Quem?', dica: 'Nome ou função do responsável pela tarefa.', tipo: 'text' },
+    { chave: 'onde', rotulo: 'Onde?', dica: 'Local onde a tarefa será realizada.', tipo: 'text' },
+    { chave: 'quando', rotulo: 'Quando?', dica: 'Data ou período de realização da tarefa.', tipo: 'date' },
+    { chave: 'como', rotulo: 'Como?', dica: 'Procedimentos a serem adotados na tarefa.', tipo: 'textarea' },
+    { chave: 'quanto', rotulo: 'Quanto?', dica: 'Recursos necessários para realizar a tarefa.', tipo: 'text' }
+];
+
+export function criarTarefaVazia() {
+    return {
+        id: `TF-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        titulo: '', porque: '', quem: '', onde: '', quando: '', como: '', quanto: '',
+        concluida: false
+    };
+}
+
+export function criarEtapaVazia(titulo = '') {
+    return {
+        id: `ET-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        titulo,
+        impacto: 'MEDIO',
+        observacao: '',
+        tarefas: []
+    };
+}
+
+export function etapaTemTarefas(etapa) {
+    return Array.isArray(etapa?.tarefas) && etapa.tarefas.length > 0;
+}
+
+/** Percentual de uma única etapa: tarefas concluídas / total de tarefas. */
+export function calcularPercentualEtapa(etapa) {
+    if (!etapa) return 0;
+    if (etapaTemTarefas(etapa)) {
+        const concluidas = etapa.tarefas.filter(t => t.concluida).length;
+        return Math.round((concluidas / etapa.tarefas.length) * 100);
+    }
+    return etapa.concluida ? 100 : 0; // etapa legada, sem tarefas
+}
+
+/**
+ * Percentual de conclusão de uma Ação a partir das suas etapas (média simples
+ * entre as etapas). Sem etapas definidas = 0%, não "indefinido".
  */
 export function calcularPercentualEtapas(etapas) {
     if (!etapas || etapas.length === 0) return 0;
-    const concluidas = etapas.filter(e => e.concluida).length;
-    return Math.round((concluidas / etapas.length) * 100);
+    const soma = etapas.reduce((acc, e) => acc + calcularPercentualEtapa(e), 0);
+    return Math.round(soma / etapas.length);
+}
+
+/** Totais de tarefas de uma lista de etapas (para resumos). */
+export function contarTarefas(etapas = []) {
+    let total = 0;
+    let concluidas = 0;
+    etapas.forEach(e => {
+        if (etapaTemTarefas(e)) {
+            total += e.tarefas.length;
+            concluidas += e.tarefas.filter(t => t.concluida).length;
+        }
+    });
+    return { total, concluidas };
+}
+
+/** Setores do Radar 2030. Os núcleos pertencem à Secretaria-Executiva. */
+export const SETORES_RADAR = [
+    { chave: 'Presidência', rotulo: 'Presidência', pai: null },
+    { chave: 'Secretaria-Executiva', rotulo: 'Secretaria-Executiva', pai: null },
+    { chave: 'Núcleo Administrativo', rotulo: 'Núcleo Administrativo', pai: 'Secretaria-Executiva' },
+    { chave: 'Núcleo Recursos', rotulo: 'Núcleo Recursos', pai: 'Secretaria-Executiva' },
+    { chave: 'Núcleo GeoCetran', rotulo: 'Núcleo GeoCetran', pai: 'Secretaria-Executiva' },
+    { chave: 'Núcleo ICetran', rotulo: 'Núcleo ICetran', pai: 'Secretaria-Executiva' },
+    { chave: 'Núcleo JusCetran', rotulo: 'Núcleo JusCetran', pai: 'Secretaria-Executiva' },
+    { chave: 'CTSEG', rotulo: 'CTSEG - Comissão Temática de Segurança Viária', pai: null },
+    { chave: 'CTSIST', rotulo: 'CTSIST - Comissão Temática de Sistema de Trânsito', pai: null },
+    { chave: 'CTEDUC', rotulo: 'CTEDUC - Comissão Temática de Educação para o Trânsito', pai: null }
+];
+
+const ALIASES_SETOR = {
+    'presidencia': 'Presidência',
+    'presidencia do cetran': 'Presidência',
+    'secretaria executiva': 'Secretaria-Executiva',
+    'secretaria nexecutiva': 'Secretaria-Executiva',
+    'sec exec': 'Secretaria-Executiva',
+    'secexec': 'Secretaria-Executiva',
+    'nucleo administrativo': 'Núcleo Administrativo',
+    'nucleo recursos': 'Núcleo Recursos',
+    'nucleo geocetran': 'Núcleo GeoCetran',
+    'geocetran': 'Núcleo GeoCetran',
+    'nucleo icetran': 'Núcleo ICetran',
+    'icetran': 'Núcleo ICetran',
+    'nucleo juscetran': 'Núcleo JusCetran',
+    'juscetran': 'Núcleo JusCetran',
+    'ctseg': 'CTSEG',
+    'ctsist': 'CTSIST',
+    'cteduc': 'CTEDUC'
+};
+
+/** Converte variações de escrita para o nome oficial do setor; desconhecidos ficam como estão. */
+export function normalizarSetor(texto) {
+    const original = (texto || '').trim();
+    if (!original) return '';
+    const chave = original.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    return ALIASES_SETOR[chave] || original;
 }
 
 /**
@@ -21,7 +131,8 @@ export function calcularPercentualEtapas(etapas) {
  */
 export function listarSetoresDaAcao(setorTexto) {
     if (!setorTexto || !setorTexto.trim()) return ['Não classificado'];
-    return setorTexto.split(',').map(s => s.trim()).filter(Boolean);
+    const setores = setorTexto.split(',').map(s => normalizarSetor(s)).filter(Boolean);
+    return [...new Set(setores)];
 }
 
 /**

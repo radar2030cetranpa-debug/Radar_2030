@@ -27,7 +27,12 @@ export class AcoesService {
         { id: { contains: filters.busca, mode: 'insensitive' as const } },
         { diretriz: { contains: filters.busca, mode: 'insensitive' as const } },
         { setor: { contains: filters.busca, mode: 'insensitive' as const } },
-        { responsavel: { contains: filters.busca, mode: 'insensitive' as const } },
+        {
+          responsavel: {
+            contains: filters.busca,
+            mode: 'insensitive' as const,
+          },
+        },
       ];
     }
 

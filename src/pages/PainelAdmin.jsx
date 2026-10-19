@@ -11,6 +11,7 @@ import {
 import { importarAcoes } from '../services/acoes';
 import { acoesEstrategicas } from '../services/acoes_data';
 import { ApiError } from '../services/api';
+import { labelRole } from '../services/permissoes';
 import Swal from 'sweetalert2';
 
 const ROLES = ['USUARIO', 'ADMIN_SETOR', 'COMITE', 'ADMIN_GERAL'];
@@ -20,7 +21,7 @@ const PRAZOS = [
     { valor: 'LONGO_PRAZO', rotulo: 'Longo Prazo' }
 ];
 
-const formVazio = { email: '', senha: '', role: 'USUARIO', setor: '' };
+const formVazio = { email: '', role: 'USUARIO', setor: '' };
 const acaoVazia = {
     id: '',
     diretriz: '',
@@ -65,14 +66,60 @@ export function PainelAdmin({ usuarioLogado }) {
 
     const handleCriarUsuario = async (e) => {
         e.preventDefault();
-        if (!form.email || !form.senha) {
-            Swal.fire({ icon: 'warning', title: 'Campos obrigatórios', text: 'Preencha e-mail e senha.', confirmButtonColor: '#2563eb' });
+        if (!form.email) {
+            Swal.fire({ icon: 'warning', title: 'Campo obrigatório', text: 'Informe o e-mail institucional.', confirmButtonColor: '#2563eb' });
             return;
         }
         setEnviando(true);
         try {
-            await criarUsuario({ email: form.email, senha: form.senha, role: form.role, setor: form.setor || undefined });
-            Swal.fire({ icon: 'success', title: 'Usuário criado!', timer: 1500, showConfirmButton: false });
+            const usuarioCriado = await criarUsuario({
+                email: form.email.trim().toLowerCase(),
+                role: form.role,
+                setor: form.setor ? form.setor.trim() : undefined
+            });
+
+            const linkDefinicao = usuarioCriado?.resetToken
+                ? `${window.location.origin}/?token=${usuarioCriado.resetToken}#definir-senha`
+                : null;
+
+            if (linkDefinicao) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Convite Gerado!',
+                    html: `
+                        <p style="font-size:0.95rem; color:#475569; margin-bottom:1rem;">
+                            O usuário <strong>${form.email}</strong> foi cadastrado. Um link para criação de senha foi gerado.
+                        </p>
+                        <div style="background:#f1f5f9; padding:0.75rem; border-radius:8px; font-size:0.8rem; word-break:break-all; text-align:left; color:#1e293b; border:1px solid #cbd5e1; margin-bottom:0.75rem;">
+                            <strong>Link de ativação:</strong><br/>
+                            <a href="${linkDefinicao}" target="_blank" style="color:#2563eb;">${linkDefinicao}</a>
+                        </div>
+                        <p style="font-size:0.8rem; color:#64748b; margin:0;">
+                            Você pode copiar o link acima ou o usuário poderá acessar diretamente pelo e-mail.
+                        </p>
+                    `,
+                    confirmButtonText: 'Copiar Link e Fechar',
+                    confirmButtonColor: '#2563eb',
+                    showCancelButton: true,
+                    cancelButtonText: 'Fechar',
+                    cancelButtonColor: '#64748b',
+                    preConfirm: () => {
+                        navigator.clipboard?.writeText(linkDefinicao);
+                    }
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        Swal.fire({ icon: 'success', title: 'Link copiado!', timer: 1200, showConfirmButton: false });
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Usuário cadastrado!',
+                    text: `O link para cadastrar a senha foi enviado para ${form.email}.`,
+                    confirmButtonColor: '#2563eb'
+                });
+            }
+
             setForm(formVazio);
             setMostrarForm(false);
             carregarUsuarios();
@@ -212,7 +259,7 @@ export function PainelAdmin({ usuarioLogado }) {
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
                 <h2 style={{ color: '#1e293b', margin: 0 }}>Painel do Administrador</h2>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Gerenciamento global de acessos, usuários e ações base do SAEP.</p>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Gerenciamento global de acessos, usuários e ações base do Radar 2030.</p>
             </div>
 
             {/* Seção de Usuários */}
@@ -238,9 +285,9 @@ export function PainelAdmin({ usuarioLogado }) {
 
                 {/* Formulário de criação */}
                 {mostrarForm && (
-                    <form onSubmit={handleCriarUsuario} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <form onSubmit={handleCriarUsuario} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                            <label style={estiloLabel}>E-mail *</label>
+                            <label style={estiloLabel}>E-mail institucional *</label>
                             <input
                                 type="email"
                                 value={form.email}
@@ -251,39 +298,34 @@ export function PainelAdmin({ usuarioLogado }) {
                             />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                            <label style={estiloLabel}>Senha *</label>
-                            <input
-                                type="password"
-                                value={form.senha}
-                                onChange={e => setForm(f => ({ ...f, senha: e.target.value }))}
-                                placeholder="Mín. 8 caracteres"
-                                required
-                                style={estiloInput}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                            <label style={estiloLabel}>Perfil (Role)</label>
+                            <label style={estiloLabel}>Perfil (Role) *</label>
                             <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} style={estiloInput}>
-                                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                                {ROLES.map(r => <option key={r} value={r}>{labelRole(r)}</option>)}
                             </select>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                            <label style={estiloLabel}>Setor (opcional)</label>
+                            <label style={estiloLabel}>Setor {form.role === 'USUARIO' || form.role === 'ADMIN_SETOR' ? '*' : '(opcional)'}</label>
                             <input
                                 type="text"
                                 value={form.setor}
                                 onChange={e => setForm(f => ({ ...f, setor: e.target.value }))}
                                 placeholder="Ex: CTSIST"
+                                required={form.role === 'USUARIO' || form.role === 'ADMIN_SETOR'}
                                 style={estiloInput}
                             />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gridColumn: '1 / -1' }}>
+                        <div style={{ gridColumn: '1 / -1', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#1e40af' }}>
+                            <i className="bi bi-info-circle-fill"></i>
+                            <span>O usuário receberá um link seguro para cadastrar e confirmar sua própria senha no primeiro acesso.</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gridColumn: '1 / -1', marginTop: '0.25rem' }}>
                             <button
                                 type="submit"
                                 disabled={enviando}
-                                style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                                style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.65rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                             >
-                                {enviando ? 'Criando...' : 'Criar Usuário'}
+                                <i className="bi bi-send-fill"></i>
+                                {enviando ? 'Cadastrando...' : 'Enviar Convite e Cadastrar'}
                             </button>
                         </div>
                     </form>
@@ -312,14 +354,14 @@ export function PainelAdmin({ usuarioLogado }) {
                                         <td style={{ padding: '12px', fontWeight: 'bold', color: '#1e293b' }}>{u.email}</td>
                                         <td style={{ padding: '12px' }}>
                                             {u.id === usuarioLogado?.id ? (
-                                                <span style={estiloBadgeRole(u.role)}>{u.role}</span>
+                                                <span style={estiloBadgeRole(u.role)}>{labelRole(u.role)}</span>
                                             ) : (
                                                 <select
                                                     value={u.role}
                                                     onChange={e => handleAlterarRole(u, e.target.value)}
                                                     style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem', fontWeight: 'bold', ...corRole(u.role) }}
                                                 >
-                                                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                                                    {ROLES.map(r => <option key={r} value={r}>{labelRole(r)}</option>)}
                                                 </select>
                                             )}
                                         </td>

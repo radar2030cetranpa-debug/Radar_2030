@@ -64,12 +64,21 @@ export class ComiteService {
 
   async getEstatisticas() {
     const total = await this.prisma.matriz.count();
-    const enviados = await this.prisma.matriz.count({ where: { status: Status.ENVIADO } });
-    const aprovados = await this.prisma.matriz.count({ where: { status: Status.APROVADO } });
-    const pendentes = await this.prisma.matriz.count({ where: { status: Status.PENDENTE } });
-    const rascunhos = await this.prisma.matriz.count({ where: { status: Status.RASCUNHO } });
+    const enviados = await this.prisma.matriz.count({
+      where: { status: Status.ENVIADO },
+    });
+    const aprovados = await this.prisma.matriz.count({
+      where: { status: Status.APROVADO },
+    });
+    const pendentes = await this.prisma.matriz.count({
+      where: { status: Status.PENDENTE },
+    });
+    const rascunhos = await this.prisma.matriz.count({
+      where: { status: Status.RASCUNHO },
+    });
 
-    const resultado: Array<{ media_dias: number | null }> = await this.prisma.$queryRaw`
+    const resultado: Array<{ media_dias: number | null }> = await this.prisma
+      .$queryRaw`
       SELECT
         AVG(EXTRACT(DAY FROM ("dataAvaliacao" - "dataCriacao"))) as media_dias
       FROM "Matriz"
@@ -127,7 +136,9 @@ export class ComiteService {
     }
 
     if (matriz.status !== Status.ENVIADO) {
-      throw new BadRequestException('Apenas matrizes enviadas podem receber votos');
+      throw new BadRequestException(
+        'Apenas matrizes enviadas podem receber votos',
+      );
     }
 
     const revisao = await this.prisma.matrizRevisao.findFirst({
@@ -136,7 +147,9 @@ export class ComiteService {
     });
 
     if (!revisao) {
-      throw new BadRequestException('Não existe revisão ativa para esta matriz');
+      throw new BadRequestException(
+        'Não existe revisão ativa para esta matriz',
+      );
     }
 
     const voto = await this.prisma.voto.upsert({
@@ -172,7 +185,11 @@ export class ComiteService {
   /**
    * Decisão final — restrita a Admin Geral pelo controller.
    */
-  async avaliar(id: string, avaliarMatrizDto: AvaliarMatrizDto, userId: string) {
+  async avaliar(
+    id: string,
+    avaliarMatrizDto: AvaliarMatrizDto,
+    userId: string,
+  ) {
     const matriz = await this.prisma.matriz.findUnique({ where: { id } });
 
     if (!matriz) {
@@ -180,7 +197,9 @@ export class ComiteService {
     }
 
     if (matriz.status !== Status.ENVIADO) {
-      throw new BadRequestException('Apenas matrizes enviadas podem ser avaliadas');
+      throw new BadRequestException(
+        'Apenas matrizes enviadas podem ser avaliadas',
+      );
     }
 
     const matrizAtualizada = await this.prisma.matriz.update({
@@ -213,15 +232,22 @@ export class ComiteService {
       throw new NotFoundException('Matriz não encontrada');
     }
 
-    if (solicitante.role === Role.USUARIO && matriz.criadoPorId !== solicitante.id) {
-      throw new ForbiddenException('Você não tem permissão para visualizar esta matriz');
+    if (
+      solicitante.role === Role.USUARIO &&
+      matriz.criadoPorId !== solicitante.id
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para visualizar esta matriz',
+      );
     }
 
     if (
       solicitante.role === Role.ADMIN_SETOR &&
       matriz.criadoPor?.setor !== solicitante.setor
     ) {
-      throw new ForbiddenException('Você não tem permissão para visualizar esta matriz');
+      throw new ForbiddenException(
+        'Você não tem permissão para visualizar esta matriz',
+      );
     }
 
     const revisoes = await this.prisma.matrizRevisao.findMany({

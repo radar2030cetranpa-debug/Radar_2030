@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, IsArray, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsArray,
+  IsEnum,
+} from 'class-validator';
 import { Prazo } from '@prisma/client';
 
 export class UpdateAcaoDto {

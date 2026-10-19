@@ -79,7 +79,7 @@ function GaugeCircular({ percentual, altura = 180 }) {
 const STATUS_INFO = {
     RASCUNHO: { rotulo: 'Rascunhos salvos',                cor: '#fbbf24', corTexto: '#ca8a04' },
     ENVIADO:  { rotulo: 'Aguardando Análise (Enviados)',   cor: '#38bdf8', corTexto: '#0284c7' },
-    APROVADO: { rotulo: 'Aprovados pelo Comitê',           cor: '#4ade80', corTexto: '#16a34a' },
+    APROVADO: { rotulo: 'Aprovados pelo Comitê Gestor',           cor: '#4ade80', corTexto: '#16a34a' },
     PENDENTE: { rotulo: 'Pendentes / Ajustes solicitados', cor: '#f87171', corTexto: '#dc2626' }
 };
 
@@ -180,7 +180,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             <div style={{ maxWidth: '800px', margin: '3.5rem auto', padding: '2rem 1.5rem', textAlign: 'center' }}>
                 <img
                     src={logoImg}
-                    alt="Logo SAEP"
+                    alt="Logo Radar 2030"
                     style={{
                         height: '75px',
                         width: 'auto',
@@ -209,7 +209,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
                         <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginBottom: '0.75rem' }}>
                             <i className="bi bi-people-fill"></i>
                         </div>
-                        <h4 style={{ margin: '0 0 0.35rem 0', color: '#1e293b', fontSize: '0.95rem' }}>Comitê Técnico</h4>
+                        <h4 style={{ margin: '0 0 0.35rem 0', color: '#1e293b', fontSize: '0.95rem' }}>Comitê Gestor</h4>
                         <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', lineHeight: 1.5 }}>Análise colegiada, pareceres técnicos e votação de diretrizes.</p>
                     </div>
 
@@ -234,21 +234,29 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
         return (
             <div className="painel-estado">
                 <i className="bi bi-arrow-repeat painel-estado-icon" aria-hidden="true"></i>
-                <p className="painel-estado-text">Carregando indicadores do SAEP...</p>
+                <p className="painel-estado-text">Carregando indicadores do Radar 2030...</p>
             </div>
         );
     }
 
     const semDados = totalRegistros === 0;
 
-    // Lista de serviços / módulos do SAEP
+    // Lista de serviços / módulos do Radar 2030
     const servicos = [
+        {
+            titulo: 'Dashboard Estratégico',
+            descricao: 'Painel executivo com 5 visões em cascata: 4 Eixos, 21 Projetos (destacando 8 estratégicos), Objetivos, Horizontes de Prazo e Lente de Setores.',
+            icone: 'bi bi-bar-chart-line-fill',
+            corIcone: '#2563eb',
+            bgIcone: '#eff6ff',
+            tela: telas.DASHBOARD
+        },
         {
             titulo: 'Ações Estratégicas',
             descricao: 'Catálogo oficial de ações do PETRANS. Consulte diretrizes, prazos, setores e inicie o preenchimento de matrizes 5W2H.',
             icone: 'bi bi-diagram-3-fill',
-            corIcone: '#2563eb',
-            bgIcone: '#eff6ff',
+            corIcone: '#0284c7',
+            bgIcone: '#f0f9ff',
             tela: telas.ACOES
         },
         {
@@ -268,7 +276,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             tela: telas.RASCUNHOS
         },
         ...(podeVerComite ? [{
-            titulo: 'Painel do Comitê',
+            titulo: 'Painel Gestor',
             descricao: 'Ambiente de deliberação técnica para avaliação, emissão de pareceres e aprovação ou ajuste de matrizes enviadas.',
             icone: 'bi bi-people-fill',
             corIcone: '#d97706',
@@ -291,7 +299,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             <div className="painel-header">
                 <div>
                     <p className="painel-eyebrow">Monitoramento Estratégico</p>
-                    <h2 className="painel-title">Painel de Andamento do SAEP</h2>
+                    <h2 className="painel-title">Painel de Andamento do Radar 2030</h2>
                     <p className="painel-subtitle">
                         Visão consolidada do progresso e execução das ações do PETRANS / CETRAN-PA.
                     </p>
@@ -359,7 +367,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
 
                     <div className="painel-metric is-verde">
                         <i className="bi bi-check2-circle painel-metric-icon" aria-hidden="true"></i>
-                        <span className="painel-metric-label">Aprovadas pelo Comitê</span>
+                        <span className="painel-metric-label">Aprovadas pelo Comitê Gestor</span>
                         <span className="painel-metric-value">{contagem.APROVADO}</span>
                     </div>
                 </div>
@@ -388,7 +396,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
 
                     <p style={{ margin: '1rem 0 0 0', fontSize: '0.8rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
                         <i className="bi bi-info-circle" style={{ marginRight: '4px' }}></i>
-                        {contagem.ENVIADO} matriz(es) aguardando parecer do Comitê.
+                        {contagem.ENVIADO} matriz(es) aguardando parecer do Comitê Gestor.
                     </p>
                 </div>
             </div>
@@ -397,7 +405,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             <div style={{ marginTop: '2.5rem' }}>
                 <div style={{ marginBottom: '1.25rem' }}>
                     <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Módulos e Recursos</p>
-                    <h3 style={{ margin: '0.25rem 0 0 0', fontSize: '1.35rem', color: '#0f172a' }}>Serviços do SAEP</h3>
+                    <h3 style={{ margin: '0.25rem 0 0 0', fontSize: '1.35rem', color: '#0f172a' }}>Serviços do Radar 2030</h3>
                     <p style={{ margin: '0.35rem 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
                         Acesse rapidamente as ferramentas do sistema para planejar, cadastrar e acompanhar suas metas.
                     </p>
@@ -455,7 +463,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             {/* Rodapé Informativo */}
             <div style={{ marginTop: '2.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '12px', color: '#64748b', fontSize: '0.85rem' }}>
                 <i className="bi bi-shield-check" style={{ fontSize: '1.2rem', color: '#16a34a' }}></i>
-                <span>Os dados exibidos neste painel são integrados em tempo real com a API do SAEP conforme as diretrizes do PETRANS / CETRAN-PA.</span>
+                <span>Os dados exibidos neste painel são integrados em tempo real com a API do Radar 2030 conforme as diretrizes do PETRANS / CETRAN-PA.</span>
             </div>
         </div>
     );

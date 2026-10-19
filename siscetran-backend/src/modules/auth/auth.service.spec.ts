@@ -75,7 +75,10 @@ describe('AuthService', () => {
     });
 
     it('deve lançar UnauthorizedException se o usuário estiver desativado', async () => {
-      prisma.usuario.findUnique.mockResolvedValue({ ...usuarioMock, ativo: false });
+      prisma.usuario.findUnique.mockResolvedValue({
+        ...usuarioMock,
+        ativo: false,
+      });
 
       await expect(
         authService.login({ email: 'admin@email.com', senha: 'admin123' }),

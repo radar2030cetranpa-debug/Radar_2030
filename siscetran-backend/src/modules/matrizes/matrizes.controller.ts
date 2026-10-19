@@ -105,9 +105,15 @@ export class MatrizesController {
 
   @Post(':id/votar')
   @Roles(Role.COMITE, Role.ADMIN_GERAL)
-  @ApiOperation({ summary: 'Registrar voto (Conselheiro ou Admin Geral) — não decide o status final' })
+  @ApiOperation({
+    summary:
+      'Registrar voto (Conselheiro ou Admin Geral) — não decide o status final',
+  })
   @ApiResponse({ status: 200, description: 'Voto registrado com sucesso' })
-  @ApiResponse({ status: 400, description: 'Matriz não está disponível para votação' })
+  @ApiResponse({
+    status: 400,
+    description: 'Matriz não está disponível para votação',
+  })
   async votar(
     @Param('id') id: string,
     @Body() votarMatrizDto: VotarMatrizDto,
@@ -133,7 +139,10 @@ export class MatrizesController {
   @Roles(Role.USUARIO, Role.ADMIN_SETOR, Role.ADMIN_GERAL)
   @ApiOperation({ summary: 'Atualizar etapas e progresso de matriz aprovada' })
   @ApiResponse({ status: 200, description: 'Progresso atualizado com sucesso' })
-  @ApiResponse({ status: 400, description: 'Matriz não está aprovada ou dados inválidos' })
+  @ApiResponse({
+    status: 400,
+    description: 'Matriz não está aprovada ou dados inválidos',
+  })
   async atualizarProgresso(
     @Param('id') id: string,
     @Body() dto: AtualizarProgressoDto,

@@ -3,9 +3,11 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
+import * as nodemailer from 'nodemailer';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
@@ -18,6 +20,7 @@ import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
 const SEIS_MESES_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 // Token de recuperação de senha válido por 1 hora.
 const RESET_TOKEN_VALIDADE_MS = 60 * 60 * 1000;
+const EMAIL_CONTATO = 'radar2030cetranpa@gmail.com';
 
 @Injectable()
 export class AuthService {
@@ -177,18 +180,32 @@ export class AuthService {
       },
     });
 
-    // MOCK de envio de e-mail:
-    console.log(`[MOCK EMAIL] Link de recuperação para ${usuario.email}: /redefinir-senha?token=${token}`);
-
-    const resposta: { message: string; token?: string } = {
-      message: 'Se o e-mail existir, um link de recuperação foi enviado.',
-    };
-
-    if (process.env.NODE_ENV !== 'production') {
-      resposta.token = token;
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const user = process.env.SMTP_USER || EMAIL_CONTATO;
+    const pass = process.env.SMTP_PASS;
+    if (!pass) {
+      throw new ServiceUnavailableException('O serviço de e-mail não está configurado.');
     }
 
-    return resposta;
+    const transporter = nodemailer.createTransport({
+      host,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user, pass },
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || EMAIL_CONTATO,
+      to: usuario.email,
+      subject: '[SAEP] Definição de nova senha',
+      text: [
+        'Use o token abaixo para definir uma nova senha. Ele é válido por 1 hora.',
+        '',
+        token,
+      ].join('\n'),
+    });
+
+    return { message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
   }
 
   async redefinirSenha(dto: RedefinirSenhaDto) {

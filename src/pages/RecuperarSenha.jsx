@@ -19,8 +19,6 @@ export function RecuperarSenha({ onVoltar }) {
         setCarregando(true);
         try {
             const resposta = await authService.recuperarSenha(email.trim().toLowerCase());
-            // Em ambiente de desenvolvimento o backend retorna o token direto na resposta
-            // (é um mock — em produção ele só é enviado por e-mail).
             if (resposta?.token) {
                 setToken(resposta.token);
             }

@@ -340,6 +340,7 @@ export function FormularioMatriz({
     const podeEnviar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE';
     const podeSalvarProgresso = statusAtual === 'APROVADO';
     const comentarioAtivo = statusAtual === 'PENDENTE' && comentarioComite;
+    const podeEditarTitulosEtapas = modo === 'novo' || modoEdicaoEtapas;
 
     if (carregandoDados) {
         return (
@@ -470,46 +471,6 @@ export function FormularioMatriz({
                         )}
                     </div>
                 )}
-
-                <section className="formulario-section">
-                    <div className="section-header etapas-section-header">
-                        <div>
-                            <span className="section-number">09</span>
-                            <h2 className="section-title">Etapas de execução</h2>
-                        </div>
-                        <button
-                            type="button"
-                            className={`etapas-edit-button${modoEdicaoEtapas ? ' is-active' : ''}`}
-                            onClick={() => setModoEdicaoEtapas(!modoEdicaoEtapas)}
-                            aria-pressed={modoEdicaoEtapas}
-                            aria-label={modoEdicaoEtapas ? 'Desativar edição das etapas' : 'Editar etapas de execução'}
-                            title={modoEdicaoEtapas ? 'Concluir edição das etapas' : 'Editar etapas de execução'}
-                        >
-                            <i className="bi bi-pencil-square" aria-hidden="true" />
-                        </button>
-                        <p className="section-description">
-                            {modoEdicaoEtapas
-                                ? 'Adicione, edite ou remova as etapas desta ação.'
-                                : statusAtual === 'APROVADO'
-                                ? 'Marque as etapas conforme forem concluídas. O percentual de andamento desta ação é calculado automaticamente.'
-                                : 'Defina os passos necessários para concluir cada ação. Depois de aprovada pelo Comitê, essas etapas poderão ser marcadas como concluídas.'}
-                        </p>
-                    </div>
-                    <div style={{ display: 'grid', gap: '1rem' }}>
-                        {acoesComEtapas.map(acao => (
-                            <ChecklistEtapas
-                                key={acao.acaoId}
-                                acaoId={acao.acaoId}
-                                acaoLabel={acao.acao?.diretriz || `Ação ${acao.acaoId}`}
-                                etapas={acao.etapas}
-                                onChange={(novasEtapas) => handleEtapasChange(acao.acaoId, novasEtapas)}
-                                editavelTitulos={modoEdicaoEtapas}
-                                editavelConclusao={statusAtual === 'APROVADO'}
-                                disabled={!podeEditar && statusAtual !== 'APROVADO'}
-                            />
-                        ))}
-                    </div>
-                </section>
 
                 {(!podeEditar && statusAtual !== 'PENDENTE') ? null : (
                     <>
@@ -707,8 +668,51 @@ export function FormularioMatriz({
                                 disabled={!podeEditar}
                             />
                         </section>
+
                     </>
                 )}
+
+                <section className="formulario-section">
+                    <div className="section-header etapas-section-header">
+                        <div>
+                            <span className="section-number">09</span>
+                            <h2 className="section-title">Etapas de execução</h2>
+                        </div>
+                        {isEdit && (
+                            <button
+                                type="button"
+                                className={`etapas-edit-button${modoEdicaoEtapas ? ' is-active' : ''}`}
+                                onClick={() => setModoEdicaoEtapas(!modoEdicaoEtapas)}
+                                aria-pressed={modoEdicaoEtapas}
+                                aria-label={modoEdicaoEtapas ? 'Desativar edição das etapas' : 'Editar etapas de execução'}
+                                title={modoEdicaoEtapas ? 'Concluir edição das etapas' : 'Editar etapas de execução'}
+                            >
+                                <i className="bi bi-pencil-square" aria-hidden="true" />
+                            </button>
+                        )}
+                        <p className="section-description">
+                            {podeEditarTitulosEtapas
+                                ? 'Adicione, edite ou remova as etapas desta ação.'
+                                : statusAtual === 'APROVADO'
+                                ? 'Marque as etapas conforme forem concluídas. O percentual de andamento desta ação é calculado automaticamente.'
+                                : 'Defina os passos necessários para concluir cada ação. Depois de aprovada pelo Comitê, essas etapas poderão ser marcadas como concluídas.'}
+                        </p>
+                    </div>
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                        {acoesComEtapas.map(acao => (
+                            <ChecklistEtapas
+                                key={acao.acaoId}
+                                acaoId={acao.acaoId}
+                                acaoLabel={acao.acao?.diretriz || `Ação ${acao.acaoId}`}
+                                etapas={acao.etapas}
+                                onChange={(novasEtapas) => handleEtapasChange(acao.acaoId, novasEtapas)}
+                                editavelTitulos={podeEditarTitulosEtapas}
+                                editavelConclusao={statusAtual === 'APROVADO'}
+                                disabled={!podeEditar && statusAtual !== 'APROVADO'}
+                            />
+                        ))}
+                    </div>
+                </section>
 
                 <div className="formulario-actions">
                     <button 

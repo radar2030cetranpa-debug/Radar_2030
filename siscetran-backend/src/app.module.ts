@@ -9,6 +9,7 @@ import { MatrizesModule } from './modules/matrizes/matrizes.module';
 import { AcoesModule } from './modules/acoes/acoes.module';
 import { ComiteModule } from './modules/comite/comite.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { SuporteModule } from './modules/suporte/suporte.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     AcoesModule,
     ComiteModule,
     DashboardModule,
+    SuporteModule,
   ],
 })
 export class AppModule {}

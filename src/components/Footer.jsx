@@ -1,7 +1,7 @@
 // src/components/Footer.jsx
 import React from 'react';
 
-export function Footer() {
+export function Footer({ onNavigate }) {
     return (
         <footer style={{ 
             background: '#ffffff', 
@@ -19,7 +19,9 @@ export function Footer() {
                 <p style={{ margin: 0 }}>
                     Conselho Estadual de Trânsito do Estado do Pará &copy; {new Date().getFullYear()} &mdash; Todos os direitos reservados.
                 </p>
-                <p
+                <button
+                    type="button"
+                    onClick={() => onNavigate?.('suporte')}
                     title="Suporte técnico"
                     aria-label="Suporte técnico"
                     style={{
@@ -37,7 +39,7 @@ export function Footer() {
                 >
                     <i className="bi bi-headset" aria-hidden="true"></i>
                     Suporte técnico
-                </p>
+                </button>
             </div>
         </footer>
     );

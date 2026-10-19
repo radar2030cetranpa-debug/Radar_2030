@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { PainelAndamento } from './pages/PainelAndamento';
 import { TrocarSenha } from './pages/TrocarSenha';
 import { RecuperarSenha } from './pages/RecuperarSenha';
+import { SuporteTecnico } from './pages/SuporteTecnico';
 
 const TELAS = {
     HOME: 'home',
@@ -21,7 +22,8 @@ const TELAS = {
     COMITE: 'comite',
     ADMIN: 'admin',
     TROCAR_SENHA: 'trocar-senha',
-    RECUPERAR_SENHA: 'recuperar-senha'
+    RECUPERAR_SENHA: 'recuperar-senha',
+    SUPORTE: 'suporte'
 };
 
 export default function App() {
@@ -114,6 +116,8 @@ export default function App() {
                 return <TrocarSenha onVoltar={() => setTelaAtual(TELAS.HOME)} />;
             case TELAS.RECUPERAR_SENHA:
                 return <RecuperarSenha onVoltar={() => setTelaAtual(TELAS.HOME)} />;
+            case TELAS.SUPORTE:
+                return <SuporteTecnico onVoltar={() => setTelaAtual(usuarioLogado ? TELAS.HOME : TELAS.RECUPERAR_SENHA)} />;
             default:
                 return <div style={{ padding: '2rem' }}><h2>Página não encontrada</h2></div>;
         }
@@ -133,7 +137,7 @@ export default function App() {
                 {renderizarTela()}
             </main>
 
-            <Footer />
+            <Footer onNavigate={(tela) => setTelaAtual(tela)} />
         </div>
     );
 }

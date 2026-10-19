@@ -81,6 +81,10 @@ button, input, select, textarea {
         right: 1rem;
         left: 1rem;
     }
+
+    .suporte-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 /* Scrollbar personalizada */

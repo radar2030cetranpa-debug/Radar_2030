@@ -50,17 +50,26 @@ function BarraProgresso({ percentual }) {
 function FormularioTarefa({ tarefa, onChange }) {
     const atualizar = (chave, valor) => onChange({ ...tarefa, [chave]: valor });
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.1rem' }}>
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="bi bi-pencil-square"></i>
+                    Explicar / Detalhar Tarefa (5W2H)
+                </span>
+                <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                    Descreva os parâmetros de execução (o quê, por quê, quem, onde, quando, como e quanto).
+                </p>
+            </div>
             {CAMPOS_5W2H_TAREFA.map(campo => (
                 <div key={campo.chave} style={{ gridColumn: campo.tipo === 'textarea' ? '1 / -1' : 'auto' }}>
                     <label style={estiloLabel}>{campo.rotulo}</label>
                     {campo.tipo === 'textarea' ? (
                         <textarea
-                            rows={3}
+                            rows={campo.chave === 'titulo' ? 2 : 3}
                             value={tarefa[campo.chave] || ''}
                             onChange={(e) => atualizar(campo.chave, e.target.value)}
                             placeholder={campo.dica}
-                            style={{ ...estiloInput, resize: 'vertical', minHeight: '85px', lineHeight: 1.5 }}
+                            style={{ ...estiloInput, resize: 'vertical', minHeight: campo.chave === 'titulo' ? '65px' : '85px', lineHeight: 1.5 }}
                         />
                     ) : (
                         <input
@@ -81,9 +90,15 @@ function FormularioTarefa({ tarefa, onChange }) {
 function DetalhesTarefa({ tarefa }) {
     const campos = CAMPOS_5W2H_TAREFA.filter(c => c.chave !== 'titulo');
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem', marginTop: '0.85rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem', marginTop: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.1rem' }}>
+            <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="bi bi-card-text"></i>
+                    Detalhamento da Tarefa (5W2H)
+                </span>
+            </div>
             {campos.map(campo => (
-                <div key={campo.chave} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.75rem 0.95rem', gridColumn: campo.tipo === 'textarea' ? '1 / -1' : 'auto' }}>
+                <div key={campo.chave} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 0.95rem', gridColumn: campo.tipo === 'textarea' ? '1 / -1' : 'auto' }}>
                     <span style={estiloLabel}>{campo.rotulo}</span>
                     <span style={{ fontSize: '0.95rem', color: '#0f172a', whiteSpace: 'pre-line' }}>{tarefa[campo.chave] || '-'}</span>
                 </div>
@@ -108,7 +123,7 @@ function CartaoTarefa({ tarefa, indice, editavelTitulos, editavelConclusao, onCh
                 />
                 <span style={{ flex: 1, fontSize: '1.05rem', color: tarefa.concluida ? '#16a34a' : '#0f172a', textDecoration: tarefa.concluida ? 'line-through' : 'none' }}>
                     <strong style={{ color: '#475569', marginRight: '0.5rem', fontSize: '1rem' }}>Tarefa {indice + 1}:</strong>
-                    {tarefa.titulo || <em style={{ color: '#94a3b8' }}>sem descrição (clique em Editar 5W2H)</em>}
+                    {tarefa.titulo || <em style={{ color: '#94a3b8' }}>sem descrição (clique em Explicar / Detalhar)</em>}
                 </span>
                 <button 
                     type="button" 
@@ -122,10 +137,14 @@ function CartaoTarefa({ tarefa, indice, editavelTitulos, editavelConclusao, onCh
                         cursor: 'pointer', 
                         fontSize: '0.9rem', 
                         fontWeight: 600,
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
                     }}
                 >
-                    {aberta ? 'Ocultar 5W2H' : (editavelTitulos ? 'Editar 5W2H' : 'Ver 5W2H')}
+                    <i className={`bi ${aberta ? 'bi-chevron-up' : 'bi-card-text'}`}></i>
+                    {aberta ? 'Ocultar Detalhes' : 'Explicar / Detalhar'}
                 </button>
                 {editavelTitulos && (
                     <button 

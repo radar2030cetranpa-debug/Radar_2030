@@ -570,8 +570,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     onClick={() => setAbaAtiva('foco')}
                     style={estiloAba(abaAtiva === 'foco', '#2563eb')}
                 >
-                    <i className="bi bi-crosshair"></i>
-                    <span>🎯 Ação em Foco & Comitê Gestor</span>
+                    <i className="bi bi-layers-fill"></i>
+                    <span>Ação em Foco & Comitê Gestor</span>
                 </button>
 
                 <button

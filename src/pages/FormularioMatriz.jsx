@@ -23,53 +23,28 @@ export function FormularioMatriz({
     const [loading, setLoading] = useState(false);
     const [carregandoDados, setCarregandoDados] = useState(false);
     const [nome, setNome] = useState('');
-    const [oque, setOque] = useState('');
-    const [porque, setPorque] = useState('');
-    const [como, setComo] = useState('');
-    const [quando, setQuando] = useState('');
-    const [onde, setOnde] = useState('');
-    const [quanto, setQuanto] = useState('');
-    const [impacto, setImpacto] = useState('MEDIO');
-    const [observacao, setObservacao] = useState('');
     const [acoesComEtapas, setAcoesComEtapas] = useState([]);
     const [statusAtual, setStatusAtual] = useState('RASCUNHO');
     const [comentarioComite, setComentarioComite] = useState('');
-    const [mostrarDetalhesMatriz, setMostrarDetalhesMatriz] = useState(false);
     const [modoEdicaoEtapas, setModoEdicaoEtapas] = useState(false);
-
-    const parseCurrencyInput = (valor) => {
-        if (!valor) return 0;
-        const textoLimpo = String(valor)
-            .replace(/\s/g, '')
-            .replace(/R\$|\./g, '')
-            .replace(/,/g, '.')
-            .replace(/[^0-9.-]/g, '');
-        return parseFloat(textoLimpo) || 0;
-    };
-
-    const formatarMoedaValor = (valor) => {
-        if (!valor) return '';
-        if (typeof valor === 'string' && valor.includes('R$')) return valor;
-        const num = parseCurrencyInput(valor);
-        if (num <= 0) return '';
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(num);
-    };
+    
+    // Armazena dados legados se existirem no banco, para não sobrescrever colunas antigas ao atualizar
+    const [dadosLegados, setDadosLegados] = useState({});
 
     const preencherCampos = (data) => {
         setNome(data.nome || '');
-        setOque(data.oque || '');
-        setPorque(data.porque || '');
-        setComo(data.como || '');
-        setQuando(data.quando || '');
-        setOnde(data.onde || '');
-        setQuanto(formatarMoedaValor(data.quanto));
-        setImpacto(data.impacto || 'MEDIO');
-        setObservacao(data.observacao || '');
         setStatusAtual(data.status || 'RASCUNHO');
         setComentarioComite(data.comentarioComite || '');
+        setDadosLegados({
+            oque: data.oque,
+            porque: data.porque,
+            como: data.como,
+            quando: data.quando,
+            onde: data.onde,
+            quanto: data.quanto,
+            impacto: data.impacto,
+            observacao: data.observacao
+        });
 
         const acoesData = data.acoes || data.acoesEstrategicas || [];
         if (acoesData.length > 0) {
@@ -130,44 +105,14 @@ export function FormularioMatriz({
 
     const percentualGeral = calcularPercentualGeral();
 
-    const handleQuantoChange = (e) => {
-        let valor = e.target.value.replace(/\D/g, '');
-        if (!valor) {
-            setQuanto('');
-            return;
-        }
-        const numero = (parseInt(valor, 10) / 100).toFixed(2);
-        const formatado = new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(numero);
-        setQuanto(formatado);
-    };
-
     const validarFormulario = () => {
-        return Boolean(
-            nome.trim() && 
-            oque.trim() && 
-            porque.trim() && 
-            como.trim() && 
-            quando && 
-            onde.trim() && 
-            quanto && 
-            parseCurrencyInput(quanto) > 0
-        );
+        return Boolean(nome.trim());
     };
 
     const montarPayload = () => {
         return {
+            ...dadosLegados,
             nome: nome.trim(),
-            oque: oque.trim(),
-            porque: porque.trim(),
-            como: como.trim(),
-            quando,
-            onde: onde.trim(),
-            quanto: quanto.trim(),
-            impacto,
-            observacao: observacao.trim() || undefined,
             percentual: percentualGeral,
             acoes: acoesComEtapas.map(a => ({
                 acaoId: a.acaoId,
@@ -180,8 +125,8 @@ export function FormularioMatriz({
         if (!validarFormulario()) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Campos obrigatórios',
-                text: 'Por favor, preencha todos os campos principais antes de salvar.',
+                title: 'Nome da Matriz obrigatório',
+                text: 'Por favor, informe o Nome da Matriz antes de salvar.',
                 confirmButtonColor: '#2563eb'
             });
             return;
@@ -201,7 +146,7 @@ export function FormularioMatriz({
             Swal.fire({
                 icon: 'success',
                 title: 'Rascunho salvo!',
-                text: 'A matriz foi salva como rascunho com sucesso.',
+                text: 'A matriz foi salva com sucesso.',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -226,8 +171,8 @@ export function FormularioMatriz({
         if (!validarFormulario()) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Campos obrigatórios',
-                text: 'Preencha todos os campos obrigatórios antes de enviar.',
+                title: 'Nome da Matriz obrigatório',
+                text: 'Por favor, informe o Nome da Matriz antes de enviar.',
                 confirmButtonColor: '#2563eb'
             });
             return;
@@ -251,7 +196,7 @@ export function FormularioMatriz({
 
         const result = await Swal.fire({
             title: 'Confirmar envio',
-            text: 'Deseja enviar esta matriz para avaliação do comitê? Após enviar, não será possível editar.',
+            text: 'Deseja enviar esta matriz para deliberação do Comitê Gestor?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#2563eb',
@@ -280,7 +225,7 @@ export function FormularioMatriz({
             Swal.fire({
                 icon: 'success',
                 title: 'Enviado com sucesso!',
-                text: 'A matriz foi encaminhada para análise do comitê.',
+                text: 'A matriz foi encaminhada para análise e deliberação do Comitê Gestor.',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -335,7 +280,7 @@ export function FormularioMatriz({
     };
 
     const isEdit = modo === 'editar';
-    const titulo = isEdit ? 'Editar Matriz 5W2H' : 'Nova Matriz 5W2H';
+    const titulo = isEdit ? 'Editar Matriz' : 'Nova Matriz';
     const podeEditar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE';
     const podeEnviar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE';
     const podeSalvarProgresso = statusAtual === 'APROVADO';
@@ -354,10 +299,10 @@ export function FormularioMatriz({
         <div className="formulario-container">
             <div className="formulario-header">
                 <div>
-                    <p className="formulario-eyebrow">Formulário 5W2H</p>
+                    <p className="formulario-eyebrow">Radar 2030</p>
                     <h1 className="formulario-title">{titulo}</h1>
                     <p className="formulario-subtitle">
-                        {isEdit ? 'Atualize os campos da matriz e mantenha o mesmo registro durante o fluxo.' : 'Preencha as informações da nova matriz para envio ao Comitê.'}
+                        {isEdit ? 'Atualize o nome da matriz, adicione etapas e detalhe as tarefas de execução.' : 'Cadastre o nome da matriz, adicione as etapas (passos) e tarefas detalhadas.'}
                     </p>
                 </div>
                 <button type="button" onClick={onVoltar} className="formulario-button-tertiary">
@@ -394,289 +339,39 @@ export function FormularioMatriz({
             )}
 
             <form onSubmit={enviarParaComite} className="formulario-form">
-                {(!podeEditar && statusAtual !== 'PENDENTE') && (
-                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'grid', gap: '0.5rem' }}>
-                        <button
-                            type="button"
-                            onClick={() => setMostrarDetalhesMatriz(!mostrarDetalhesMatriz)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                padding: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                width: '100%',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                color: '#0f172a'
-                            }}
-                        >
-                            <div>
-                                <p style={{ margin: 0, fontSize: '0.68rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>Informações da ação / projeto</p>
-                                <h2 style={{ margin: '0.15rem 0 0', fontSize: '1rem', color: '#0f172a' }}>Visualização da matriz</h2>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                <span style={{ fontSize: '1.1rem', color: '#475569', transform: mostrarDetalhesMatriz ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s ease' }}>›</span>
-                            </div>
-                        </button>
-
-                        {mostrarDetalhesMatriz && (
-                            <div style={{ display: 'grid', gap: '0.65rem' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem' }}>
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.75rem' }}>
-                                        <p style={{ margin: '0 0 0.2rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Nome da ação</p>
-                                        <p style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>{nome || '-'}</p>
-                                    </div>
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.75rem' }}>
-                                        <p style={{ margin: '0 0 0.2rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Onde</p>
-                                        <p style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>{onde || '-'}</p>
-                                    </div>
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.75rem' }}>
-                                        <p style={{ margin: '0 0 0.2rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Quando</p>
-                                        <p style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>{quando || '-'}</p>
-                                    </div>
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.75rem' }}>
-                                        <p style={{ margin: '0 0 0.2rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Quanto</p>
-                                        <p style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>{quanto || '-'}</p>
-                                    </div>
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.75rem' }}>
-                                        <p style={{ margin: '0 0 0.2rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Impacto</p>
-                                        <p style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '0.9rem' }}>{impacto || '-'}</p>
-                                    </div>
-                                </div>
-
-                                <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.7rem 0.8rem' }}>
-                                    <p style={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>O quê?</p>
-                                    <p style={{ margin: 0, color: '#0f172a', whiteSpace: 'pre-line', fontSize: '0.88rem' }}>{oque || '-'}</p>
-                                </div>
-
-                                <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.7rem 0.8rem' }}>
-                                    <p style={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Por quê?</p>
-                                    <p style={{ margin: 0, color: '#0f172a', whiteSpace: 'pre-line', fontSize: '0.88rem' }}>{porque || '-'}</p>
-                                </div>
-
-                                <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.7rem 0.8rem' }}>
-                                    <p style={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Como?</p>
-                                    <p style={{ margin: 0, color: '#0f172a', whiteSpace: 'pre-line', fontSize: '0.88rem' }}>{como || '-'}</p>
-                                </div>
-
-                                {observacao && (
-                                    <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.7rem 0.8rem' }}>
-                                        <p style={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>Observações</p>
-                                        <p style={{ margin: 0, color: '#0f172a', whiteSpace: 'pre-line', fontSize: '0.88rem' }}>{observacao}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                
+                {/* 01: NOME DA MATRIZ */}
+                <section className="formulario-section">
+                    <div className="section-header">
+                        <div>
+                            <span className="section-number">01</span>
+                            <h2 className="section-title">Nome da Matriz</h2>
+                        </div>
+                        <p className="section-description">Título descritivo que identifica a matriz e o conjunto de entregas.</p>
                     </div>
-                )}
+                    <div>
+                        <label className="formulario-label" htmlFor="nome">
+                            Nome da Matriz / Ação <span className="required">*</span>
+                        </label>
+                        <input 
+                            id="nome" 
+                            type="text" 
+                            value={nome} 
+                            onChange={(e) => setNome(e.target.value)} 
+                            required 
+                            className="formulario-input" 
+                            placeholder="Ex: Regulamentação do SET / PETRANS 2030"
+                            disabled={!podeEditar}
+                        />
+                    </div>
+                </section>
 
-                {(!podeEditar && statusAtual !== 'PENDENTE') ? null : (
-                    <>
-                        <section className="formulario-section">
-                            <div className="section-header">
-                                <div>
-                                    <span className="section-number">01</span>
-                                    <h2 className="section-title">Nome da ação</h2>
-                                </div>
-                                <p className="section-description">Título que identifica a matriz e o projeto.</p>
-                            </div>
-                            <div>
-                                <label className="formulario-label" htmlFor="nome">
-                                    Nome da Ação / Projeto <span className="required">*</span>
-                                </label>
-                                <input 
-                                    id="nome" 
-                                    type="text" 
-                                    value={nome} 
-                                    onChange={(e) => setNome(e.target.value)} 
-                                    required 
-                                    className="formulario-input" 
-                                    placeholder="Ex: Modernização de Servidores"
-                                    disabled={!podeEditar}
-                                />
-                            </div>
-                        </section>
-
-                        <section className="formulario-section">
-                            <div className="section-header">
-                                <div>
-                                    <span className="section-number">02</span>
-                                    <h2 className="section-title">O quê?</h2>
-                                </div>
-                                <p className="section-description">Descreva com clareza o que será feito.</p>
-                            </div>
-                            <label className="formulario-label" htmlFor="oque">
-                                O quê? (Descrição detalhada) <span className="required">*</span>
-                            </label>
-                            <textarea 
-                                id="oque" 
-                                rows="5" 
-                                value={oque} 
-                                onChange={(e) => setOque(e.target.value)} 
-                                required 
-                                className="formulario-textarea" 
-                                placeholder="O que será feito..."
-                                disabled={!podeEditar}
-                            />
-                        </section>
-
-                        <section className="formulario-section">
-                            <div className="section-header">
-                                <div>
-                                    <span className="section-number">03</span>
-                                    <h2 className="section-title">Por quê?</h2>
-                                </div>
-                                <p className="section-description">Explique a justificativa e objetivos da ação.</p>
-                            </div>
-                            <label className="formulario-label" htmlFor="porque">
-                                Por quê? (Justificativa) <span className="required">*</span>
-                            </label>
-                            <textarea 
-                                id="porque" 
-                                rows="5" 
-                                value={porque} 
-                                onChange={(e) => setPorque(e.target.value)} 
-                                required 
-                                className="formulario-textarea" 
-                                placeholder="Por que essa ação é necessária..."
-                                disabled={!podeEditar}
-                            />
-                        </section>
-
-                        <section className="formulario-section formulario-grid-2">
-                            <div>
-                                <div className="section-header section-header-small">
-                                    <span className="section-number">04</span>
-                                    <h2 className="section-title">Onde?</h2>
-                                </div>
-                                <label className="formulario-label" htmlFor="onde">
-                                    Onde? (Local de execução) <span className="required">*</span>
-                                </label>
-                                <input 
-                                    id="onde" 
-                                    type="text" 
-                                    value={onde} 
-                                    onChange={(e) => setOnde(e.target.value)} 
-                                    required 
-                                    className="formulario-input" 
-                                    placeholder="Ex: Sede do Cetran/PA"
-                                    disabled={!podeEditar}
-                                />
-                            </div>
-                            <div>
-                                <div className="section-header section-header-small">
-                                    <span className="section-number">05</span>
-                                    <h2 className="section-title">Quando?</h2>
-                                </div>
-                                <label className="formulario-label" htmlFor="quando">
-                                    Quando? (Prazo / Data limite) <span className="required">*</span>
-                                </label>
-                                <input 
-                                    id="quando" 
-                                    type="date" 
-                                    value={quando} 
-                                    onChange={(e) => setQuando(e.target.value)} 
-                                    required 
-                                    className="formulario-input"
-                                    disabled={!podeEditar}
-                                />
-                            </div>
-                        </section>
-
-                        <section className="formulario-section">
-                            <div className="section-header">
-                                <div>
-                                    <span className="section-number">06</span>
-                                    <h2 className="section-title">Como?</h2>
-                                </div>
-                                <p className="section-description">Detalhe a metodologia, passos e estratégia.</p>
-                            </div>
-                            <label className="formulario-label" htmlFor="como">
-                                Como? (Metodologia / Passos) <span className="required">*</span>
-                            </label>
-                            <textarea 
-                                id="como" 
-                                rows="5" 
-                                value={como} 
-                                onChange={(e) => setComo(e.target.value)} 
-                                required 
-                                className="formulario-textarea" 
-                                placeholder="Como será executado..."
-                                disabled={!podeEditar}
-                            />
-                        </section>
-
-                        <section className="formulario-section formulario-grid-2">
-                            <div>
-                                <div className="section-header section-header-small">
-                                    <span className="section-number">07</span>
-                                    <h2 className="section-title">Quanto?</h2>
-                                </div>
-                                <label className="formulario-label" htmlFor="quanto">
-                                    Quanto? (Custo estimado R$) <span className="required">*</span>
-                                </label>
-                                <input 
-                                    id="quanto" 
-                                    type="text" 
-                                    value={quanto} 
-                                    onChange={handleQuantoChange} 
-                                    required 
-                                    className="formulario-input" 
-                                    placeholder="R$ 0,00"
-                                    disabled={!podeEditar}
-                                />
-                            </div>
-                            <div className="impacto-field">
-                                <label className="formulario-label" htmlFor="impacto">
-                                    Impacto <span className="required">*</span>
-                                </label>
-                                <select 
-                                    id="impacto" 
-                                    value={impacto} 
-                                    onChange={(e) => setImpacto(e.target.value)} 
-                                    className="formulario-input" 
-                                    style={{ appearance: 'none' }}
-                                    disabled={!podeEditar}
-                                >
-                                    <option value="BAIXO">Baixo</option>
-                                    <option value="MEDIO">Médio</option>
-                                    <option value="ALTO">Alto</option>
-                                </select>
-                            </div>
-                        </section>
-
-                        <section className="formulario-section">
-                            <div className="section-header">
-                                <div>
-                                    <span className="section-number">08</span>
-                                    <h2 className="section-title">Observações</h2>
-                                </div>
-                                <p className="section-description">Registre notas adicionais ou lembretes sobre a ação.</p>
-                            </div>
-                            <label className="formulario-label" htmlFor="observacao">
-                                Observações adicionais
-                            </label>
-                            <textarea 
-                                id="observacao" 
-                                rows="4" 
-                                value={observacao} 
-                                onChange={(e) => setObservacao(e.target.value)} 
-                                className="formulario-textarea" 
-                                placeholder="Notas extras se houver..."
-                                disabled={!podeEditar}
-                            />
-                        </section>
-
-                    </>
-                )}
-
+                {/* 02: ETAPAS E TAREFAS */}
                 <section className="formulario-section">
                     <div className="section-header etapas-section-header">
                         <div>
-                            <span className="section-number">09</span>
-                            <h2 className="section-title">Etapas de execução</h2>
+                            <span className="section-number">02</span>
+                            <h2 className="section-title">Etapas e Tarefas de Execução</h2>
                         </div>
                         {isEdit && (
                             <button
@@ -692,10 +387,10 @@ export function FormularioMatriz({
                         )}
                         <p className="section-description">
                             {podeEditarTitulosEtapas
-                                ? 'Adicione, edite ou remova as etapas desta ação.'
+                                ? 'Adicione os passos da ação. Em cada tarefa, clique em "Explicar / Detalhar" para preencher os parâmetros operacionais.'
                                 : statusAtual === 'APROVADO'
-                                ? 'Marque as etapas conforme forem concluídas. O percentual de andamento desta ação é calculado automaticamente.'
-                                : 'Defina os passos necessários para concluir cada ação. Depois de aprovada pelo Comitê, essas etapas poderão ser marcadas como concluídas.'}
+                                ? 'Marque as tarefas concluídas. O avanço percentual da ação e do PETRANS é atualizado em tempo real.'
+                                : 'Relação de etapas e tarefas submetidas para análise e deliberação do Comitê Gestor.'}
                         </p>
                     </div>
                     <div style={{ display: 'grid', gap: '1rem' }}>
@@ -714,6 +409,7 @@ export function FormularioMatriz({
                     </div>
                 </section>
 
+                {/* BOTÕES DE AÇÃO */}
                 <div className="formulario-actions">
                     <button 
                         type="button" 

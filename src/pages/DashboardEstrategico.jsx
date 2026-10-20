@@ -127,6 +127,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
     };
 
     const kpis = dadosResumo?.kpis || {};
+    const semDados = !carregando && !erroConexao && dadosResumo !== null && Number(kpis.totalAcoes ?? 0) === 0;
     const eixos = dadosResumo?.visao1_eixos || [];
     const projetos = dadosResumo?.visao2_projetos || [];
     const faixasPrazos = dadosResumo?.visao4_prazos || [];
@@ -194,6 +195,12 @@ export function DashboardEstrategico({ usuarioLogado }) {
                 </div>
             )}
 
+            {semDados ? (
+                <div style={{ padding: '4rem 1rem', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>
+                    Não há dados
+                </div>
+            ) : (
+                <>
             {/* Cards de KPIs Principais no Topo */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={estiloKpiCard('#2563eb')}>
@@ -681,6 +688,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                             </div>
                         </div>
                     )}
+                </>
+            )}
                 </>
             )}
         </div>

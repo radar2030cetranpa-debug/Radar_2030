@@ -288,6 +288,23 @@ export function PainelComite({ usuarioLogado }) {
                                         Revisões anteriores permanecem disponíveis para consulta e não podem ser alteradas.
                                     </p>
                                 </div>
+                                {historicoMatriz?.matriz?.avaliadoPor && (
+                                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.9rem 1rem' }}>
+                                        <strong style={{ color: '#166534' }}>
+                                            {historicoMatriz.matriz.status === 'APROVADO' ? 'Aprovada por' : 'Solicitou ajustes'}: {historicoMatriz.matriz.avaliadoPor.email}
+                                        </strong>
+                                        {historicoMatriz.matriz.dataAvaliacao && (
+                                            <p style={{ margin: '0.35rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                                                {new Date(historicoMatriz.matriz.dataAvaliacao).toLocaleString('pt-BR')}
+                                            </p>
+                                        )}
+                                        {historicoMatriz.matriz.comentarioComite && (
+                                            <p style={{ margin: '0.55rem 0 0', color: '#475569', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
+                                                {historicoMatriz.matriz.comentarioComite}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                                 {carregandoHistorico ? (
                                     <p style={{ margin: 0, color: '#64748b' }}>Carregando revisões...</p>
                                 ) : historicoMatriz?.revisoes?.length ? (

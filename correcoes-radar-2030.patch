@@ -1,0 +1,88 @@
+diff -ruN "orig/Radar 2030/siscetran-backend/prisma/acoes-seed.ts" "novo/Radar 2030/siscetran-backend/prisma/acoes-seed.ts"
+--- "orig/Radar 2030/siscetran-backend/prisma/acoes-seed.ts"	2026-10-09 19:15:40.000000000 +0000
++++ "novo/Radar 2030/siscetran-backend/prisma/acoes-seed.ts"	2026-10-14 13:52:33.234799305 +0000
+@@ -511,6 +511,14 @@
+     responsavel: "GeoCetran",
+   },
+   {
++    id: "AE 2.2.1.10B",
++    diretriz: "Estruturar equipe multidisciplinar com expertise em ciência de dados, IA e segurança viária.",
++    prazo: "Médio",
++    meta: "Equipe multidisciplinar para IA e segurança viária estruturada e em operação até o final de 2028.",
++    indicador: "% de efetivação da equipe multidisciplinar.",
++    responsavel: "Secretaria-Executiva",
++  },
++  {
+     id: "AE 2.2.1.11",
+     diretriz: "Criar painel geral de indicadores de qualidade no trânsito e manter atualizado o mapeamento de municípios que mais impactam na sinistralidade.",
+     prazo: "Médio",
+@@ -927,6 +935,14 @@
+     responsavel: "Secretaria-Executiva",
+   },
+   {
++    id: "AE 3.5.2.3",
++    diretriz: "Elaborar Manuais de procedimentos de forma faseada, contemplando processos da rotina administrativa e de atividades finalísticas do Conselho.",
++    prazo: "Curto",
++    meta: "50% Manuais de rotinas administrativas implementados até o final de 2026 e 100% até o final de 2027 e 50% de atividades finalísticas até final de 2027 e 100% até final de 2028.",
++    indicador: "% de manuais de procedimentos implementados.",
++    responsavel: "Secretaria-Executiva",
++  },
++  {
+     id: "AE 3.5.3.1",
+     diretriz: "Reformular no Regimento Interno os critérios de remuneração dos Conselheiros, contemplando presença e produtividade.",
+     prazo: "Curto",
+diff -ruN "orig/Radar 2030/siscetran-backend/src/modules/matrizes/matrizes.service.ts" "novo/Radar 2030/siscetran-backend/src/modules/matrizes/matrizes.service.ts"
+--- "orig/Radar 2030/siscetran-backend/src/modules/matrizes/matrizes.service.ts"	2026-10-09 19:06:33.000000000 +0000
++++ "novo/Radar 2030/siscetran-backend/src/modules/matrizes/matrizes.service.ts"	2026-10-14 13:52:33.233003714 +0000
+@@ -242,23 +242,40 @@
+ 
+     const { acoes, ...dados } = updateMatrizDto;
+ 
++    // Valida tudo ANTES de mexer no banco: se algo estiver errado, nada é apagado.
+     let acoesUpdate:
+       | { create: { acaoId: string; etapas: Prisma.InputJsonValue }[] }
+       | undefined = undefined;
+     if (acoes) {
+-      await this.prisma.acoesMatriz.deleteMany({ where: { matrizId: id } });
+-      acoesUpdate = {
+-        create: acoes.map((a) => ({
+-          acaoId: a.acaoId,
+-          etapas: validarEtapas(a.etapas) as Prisma.InputJsonValue,
+-        })),
+-      };
++      const novas = acoes.map((a) => ({
++        acaoId: a.acaoId,
++        etapas: validarEtapas(a.etapas) as Prisma.InputJsonValue,
++      }));
++
++      const ids = [...new Set(novas.map((a) => a.acaoId))];
++      if (ids.length > 0) {
++        const existentes = await this.prisma.acao.count({
++          where: { id: { in: ids } },
++        });
++        if (existentes !== ids.length) {
++          throw new BadRequestException('Uma ou mais ações não existem');
++        }
++      }
++
++      acoesUpdate = { create: novas };
+     }
+ 
+-    const matrizAtualizada = await this.prisma.matriz.update({
+-      where: { id },
+-      data: { ...dados, acoes: acoesUpdate },
+-      include: this.includeCompleto,
++    // Apagar as ações antigas e gravar as novas na mesma transação: se a gravação
++    // falhar, a matriz continua com as ações que já tinha.
++    const matrizAtualizada = await this.prisma.$transaction(async (tx) => {
++      if (acoesUpdate) {
++        await tx.acoesMatriz.deleteMany({ where: { matrizId: id } });
++      }
++      return tx.matriz.update({
++        where: { id },
++        data: { ...dados, acoes: acoesUpdate },
++        include: this.includeCompleto,
++      });
+     });
+ 
+     await this.logsService.create({

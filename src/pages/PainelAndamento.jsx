@@ -149,7 +149,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             Swal.fire({
                 icon: 'success',
                 title: 'CSV gerado com sucesso!',
-                text: `${resultado.quantidade} matriz(es) aprovada(s) exportada(s) para CSV.`,
+                text: `${resultado.quantidade} registro(s) exportado(s) para CSV pelo administrador.`,
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -166,7 +166,7 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
             Swal.fire({
                 icon: 'success',
                 title: 'Excel gerado com sucesso!',
-                text: `${resultado.quantidade} matriz(es) aprovada(s) exportada(s) para .xlsx.`,
+                text: `${resultado.quantidade} registro(s) exportado(s) para .xlsx pelo administrador.`,
                 timer: 2000,
                 showConfirmButton: false
             });

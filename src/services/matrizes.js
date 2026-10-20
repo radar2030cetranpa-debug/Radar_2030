@@ -44,3 +44,8 @@ export function atualizarProgressoMatriz(id, dados) {
   return api.patch(`/matrizes/${id}/progresso`, dados);
 }
 
+/** Histórico completo de revisões, deliberações e votos da matriz */
+export function buscarHistoricoMatriz(id) {
+  return api.get(`/matrizes/${id}/historico`);
+}
+

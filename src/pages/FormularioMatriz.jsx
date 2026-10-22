@@ -10,6 +10,7 @@ import {
     atualizarProgressoMatriz
 } from '../services/matrizes';
 import Swal from 'sweetalert2';
+import { RadarLoader } from '../components/RadarLoader';
 
 export function FormularioMatriz({ 
     modo = 'novo', 
@@ -289,8 +290,12 @@ export function FormularioMatriz({
 
     if (carregandoDados) {
         return (
-            <div className="formulario-container">
-                <div className="loading-spinner">Carregando dados...</div>
+            <div className="formulario-container" style={{ display: 'flex', justifyContent: 'center', padding: '4rem 1.5rem' }}>
+                <RadarLoader
+                    tamanho="md"
+                    mensagem="Carregando dados da matriz..."
+                    submensagem="Aguarde enquanto os campos e etapas são carregados"
+                />
             </div>
         );
     }

@@ -9,6 +9,7 @@ import {
 import { listarMatrizes, buscarHistoricoMatriz } from '../services/matrizes';
 import { acoesEstrategicas } from '../services/acoes_data';
 import { ehAdmin } from '../services/permissoes';
+import { RadarLoader } from '../components/RadarLoader';
 import { 
     SETORES_RADAR, 
     calcularPercentualEtapas, 
@@ -481,6 +482,18 @@ export function DashboardEstrategico({ usuarioLogado }) {
     };
 
     const eixoDaAcaoAtual = identificarEixoDoProjeto(acaoAtual?.projetoCodigo);
+
+    if (carregando) {
+        return (
+            <div style={{ padding: '6rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+                <RadarLoader
+                    tamanho="lg"
+                    mensagem="Carregando Dashboard Estratégico..."
+                    submensagem="Consolidando indicadores, visões em cascata e metas do PETRANS"
+                />
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: '2rem 1.5rem', maxWidth: '1380px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>

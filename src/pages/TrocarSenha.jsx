@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import * as authService from '../services/auth';
 import { ApiError } from '../services/api';
 import Swal from 'sweetalert2';
+import { useLoading } from '../context/LoadingContext';
 
 export function TrocarSenha({ onVoltar }) {
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
     const [carregando, setCarregando] = useState(false);
+    const { mostrarLoading, esconderLoading } = useLoading();
 
     const erros = authService.validarForcaSenha(novaSenha);
 
@@ -36,6 +38,7 @@ export function TrocarSenha({ onVoltar }) {
         }
 
         setCarregando(true);
+        mostrarLoading('Atualizando senha...', 'Salvando nova senha de acesso');
         try {
             await authService.trocarSenha(senhaAtual, novaSenha);
             Swal.fire({
@@ -54,6 +57,7 @@ export function TrocarSenha({ onVoltar }) {
             Swal.fire({ icon: 'error', title: 'Erro', text: mensagem, confirmButtonColor: '#2563eb' });
         } finally {
             setCarregando(false);
+            esconderLoading();
         }
     };
 

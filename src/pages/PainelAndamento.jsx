@@ -15,6 +15,7 @@ import { ehAdmin, ehComiteOuAdminGeral } from '../services/permissoes';
 import { obterPercentuaisPorAcao } from '../services/progresso';
 import logoImg from '../assets/logo-recortada.png';
 import Swal from 'sweetalert2';
+import { RadarLoader } from '../components/RadarLoader';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -232,9 +233,12 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
 
     if (carregando) {
         return (
-            <div className="painel-estado">
-                <i className="bi bi-arrow-repeat painel-estado-icon" aria-hidden="true"></i>
-                <p className="painel-estado-text">Carregando indicadores do Radar 2030...</p>
+            <div style={{ padding: '4rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+                <RadarLoader
+                    tamanho="lg"
+                    mensagem="Carregando indicadores do Radar 2030..."
+                    submensagem="Sincronizando dados de andamento e metas estratégicas"
+                />
             </div>
         );
     }

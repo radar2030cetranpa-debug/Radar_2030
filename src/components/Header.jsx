@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { login as apiLogin, logout as apiLogout } from '../services/auth';
 import { ApiError } from '../services/api';
 import { ehComiteOuAdminGeral, ehAdmin, labelRole } from '../services/permissoes';
+import { useLoading } from '../context/LoadingContext';
 
 export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUsuarioLogado }) {
     const [modalLoginAberto, setModalLoginAberto] = useState(false);
@@ -14,6 +15,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
     const [senha, setSenha] = useState('');
     const [mostrarSenha, setMostrarSenha] = useState(false);
     const dropdownRef = useRef(null);
+    const { mostrarLoading, esconderLoading } = useLoading();
 
     const {
         HOME = 'home',
@@ -52,6 +54,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
+        mostrarLoading('Autenticando no Radar 2030...', 'Validando credenciais do usuário');
         try {
             const usuarioEncontrado = await apiLogin(email.trim().toLowerCase(), senha);
             setUsuarioLogado(usuarioEncontrado);
@@ -73,6 +76,8 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                 text: mensagem,
                 confirmButtonColor: '#2563eb'
             });
+        } finally {
+            esconderLoading();
         }
     };
 
@@ -89,16 +94,20 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
         });
 
         if (result.isConfirmed) {
-            apiLogout();
-            setUsuarioLogado(null);
-            setDropdownUsuarioAberto(false);
-            handleNavigate(HOME);
-            Swal.fire({
-                icon: 'success',
-                title: 'Logout realizado!',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            mostrarLoading('Encerrando sessão...', 'Finalizando conexão de forma segura');
+            setTimeout(() => {
+                apiLogout();
+                setUsuarioLogado(null);
+                setDropdownUsuarioAberto(false);
+                handleNavigate(HOME);
+                esconderLoading();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Logout realizado!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }, 600);
         }
     };
 

@@ -1,0 +1,209 @@
+/* src/styles/radarLoader.css */
+
+.radar-loader-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    user-select: none;
+}
+
+.radar-loader-svg {
+    display: block;
+    overflow: visible;
+}
+
+/* Transmissor central (bulbo do radar) */
+.radar-transmitter {
+    transform-origin: 100px 62px;
+    animation: radarBulbPulse 1.6s ease-in-out infinite;
+}
+
+/* Sinais circulares em takes (1 sinal -> 2 sinais -> 3 sinais, estilo 4G) */
+.radar-signal-1 {
+    transform-origin: 100px 62px;
+    animation: radarTakeSignal1 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.radar-signal-2 {
+    transform-origin: 100px 62px;
+    animation: radarTakeSignal2 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.radar-signal-3 {
+    transform-origin: 100px 62px;
+    animation: radarTakeSignal3 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes radarBulbPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 3px rgba(229, 36, 42, 0.6));
+    }
+    45%, 75% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 8px rgba(229, 36, 42, 0.95));
+    }
+}
+
+/* Take 1: O 1º sinal circular acende de imediato */
+@keyframes radarTakeSignal1 {
+    0%, 22% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 5px rgba(229, 36, 42, 0.85));
+    }
+    23%, 82% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 3px rgba(229, 36, 42, 0.4));
+    }
+    83%, 92% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 6px rgba(229, 36, 42, 0.9));
+    }
+    93%, 100% {
+        opacity: 0.15;
+        stroke: #e5242a;
+        filter: none;
+    }
+}
+
+/* Take 2: O 2º sinal circular acende aos ~25% do ciclo */
+@keyframes radarTakeSignal2 {
+    0%, 24% {
+        opacity: 0.15;
+        stroke: #e5242a;
+        filter: none;
+    }
+    25%, 48% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 5px rgba(229, 36, 42, 0.85));
+    }
+    49%, 82% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 3px rgba(229, 36, 42, 0.4));
+    }
+    83%, 92% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 6px rgba(229, 36, 42, 0.9));
+    }
+    93%, 100% {
+        opacity: 0.15;
+        stroke: #e5242a;
+        filter: none;
+    }
+}
+
+/* Take 3: O 3º sinal circular acende aos ~50% do ciclo (sinal completo) */
+@keyframes radarTakeSignal3 {
+    0%, 49% {
+        opacity: 0.15;
+        stroke: #e5242a;
+        filter: none;
+    }
+    50%, 82% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 5px rgba(229, 36, 42, 0.85));
+    }
+    83%, 92% {
+        opacity: 1;
+        stroke: #e5242a;
+        filter: drop-shadow(0 0 6px rgba(229, 36, 42, 0.9));
+    }
+    93%, 100% {
+        opacity: 0.15;
+        stroke: #e5242a;
+        filter: none;
+    }
+}
+
+/* Overlay de Tela Cheia (Loading Screen) */
+.radar-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: radarFadeIn 0.25s ease-out;
+    padding: 1.5rem;
+}
+
+.radar-overlay-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    padding: 2.25rem 2.5rem;
+    max-width: 420px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    animation: radarScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.radar-loading-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 1.25rem 0 0.35rem 0;
+    letter-spacing: -0.01em;
+}
+
+.radar-loading-subtitle {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.radar-signal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #f1f5f9;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 1.1rem;
+    border: 1px solid #e2e8f0;
+}
+
+.radar-signal-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e5242a;
+    animation: radarSignalDotPulse 1.6s infinite;
+}
+
+@keyframes radarFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes radarScaleUp {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes radarSignalDotPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.15); }
+}

@@ -13,6 +13,7 @@ import { acoesEstrategicas } from '../services/acoes_data';
 import { ApiError } from '../services/api';
 import { labelRole } from '../services/permissoes';
 import Swal from 'sweetalert2';
+import { RadarLoader } from '../components/RadarLoader';
 
 const ROLES = ['USUARIO', 'ADMIN_SETOR', 'COMITE', 'ADMIN_GERAL'];
 const PRAZOS = [
@@ -334,7 +335,13 @@ export function PainelAdmin({ usuarioLogado }) {
                 {/* Tabela de usuários */}
                 <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {carregando ? (
-                        <p style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Carregando usuários...</p>
+                        <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+                            <RadarLoader
+                                tamanho="md"
+                                mensagem="Carregando usuários..."
+                                submensagem="Consultando perfis de acesso e permissões"
+                            />
+                        </div>
                     ) : usuarios.length === 0 ? (
                         <p style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum usuário encontrado.</p>
                     ) : (

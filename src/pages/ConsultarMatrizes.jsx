@@ -3,6 +3,7 @@ import { contarTarefas, calcularPercentualEtapas, calcularPercentualEtapa } from
 import React, { useState, useEffect, useCallback } from 'react';
 import { listarMatrizes, removerMatriz } from '../services/matrizes';
 import Swal from 'sweetalert2';
+import { RadarLoader } from '../components/RadarLoader';
 
 export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, onEditar }) {
     const [registros, setRegistros] = useState([]);
@@ -153,8 +154,12 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
 
             <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                 {carregando ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                        <p style={{ margin: 0, fontSize: '1rem' }}>Carregando matrizes do servidor...</p>
+                    <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+                        <RadarLoader
+                            tamanho="md"
+                            mensagem="Carregando matrizes do servidor..."
+                            submensagem="Consultando registros e histórico de tramitação"
+                        />
                     </div>
                 ) : registrosFiltrados.length > 0 ? (
                     <div style={{ overflowX: 'auto' }}>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import * as authService from '../services/auth';
 import { ApiError } from '../services/api';
 import Swal from 'sweetalert2';
+import { useLoading } from '../context/LoadingContext';
 
 export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
     const [etapa, setEtapa] = useState(tokenInicial ? 'redefinir' : 'email'); // 'email' | 'redefinir'
@@ -11,6 +12,7 @@ export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
     const [carregando, setCarregando] = useState(false);
+    const { mostrarLoading, esconderLoading } = useLoading();
 
     useEffect(() => {
         if (tokenInicial) {
@@ -24,6 +26,7 @@ export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
     const handleSolicitar = async (e) => {
         e.preventDefault();
         setCarregando(true);
+        mostrarLoading('Enviando solicitação...', 'Verificando o e-mail no Radar 2030');
         try {
             const resposta = await authService.recuperarSenha(email.trim().toLowerCase());
             if (resposta?.token) {
@@ -41,6 +44,7 @@ export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
             Swal.fire({ icon: 'error', title: 'Erro', text: mensagem, confirmButtonColor: '#2563eb' });
         } finally {
             setCarregando(false);
+            esconderLoading();
         }
     };
 
@@ -63,6 +67,7 @@ export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
         }
 
         setCarregando(true);
+        mostrarLoading('Atualizando senha...', 'Salvando novas credenciais com segurança');
         try {
             await authService.redefinirSenha(token.trim(), novaSenha);
             await Swal.fire({
@@ -81,6 +86,7 @@ export function RecuperarSenha({ onVoltar, tokenInicial = '' }) {
             Swal.fire({ icon: 'error', title: 'Erro', text: mensagem, confirmButtonColor: '#2563eb' });
         } finally {
             setCarregando(false);
+            esconderLoading();
         }
     };
 

@@ -13,6 +13,7 @@ import { TrocarSenha } from './pages/TrocarSenha';
 import { RecuperarSenha } from './pages/RecuperarSenha';
 import { SuporteTecnico } from './pages/SuporteTecnico';
 import { DashboardEstrategico } from './pages/DashboardEstrategico';
+import { LoadingProvider, useLoading } from './context/LoadingContext';
 
 const TELAS = {
     HOME: 'home',
@@ -28,10 +29,11 @@ const TELAS = {
     SUPORTE: 'suporte'
 };
 
-export default function App() {
+function ConteudoApp() {
     const [usuarioLogado, setUsuarioLogado] = useState(usuarioEmCache());
     const tokenInicial = new URLSearchParams(window.location.search).get('token') || '';
     const [telaAtual, setTelaAtual] = useState(tokenInicial ? TELAS.RECUPERAR_SENHA : TELAS.HOME);
+    const { mostrarLoading, esconderLoading } = useLoading();
 
     // Ref para saber se o usuário estava deslogado no render anterior.
     // Assim só redirecionamos para o painel quando ocorrer uma transição null -> usuário.
@@ -39,9 +41,13 @@ export default function App() {
 
     useEffect(() => {
         if (usuarioEmCache()) {
-            revalidarSessao().then((usuario) => setUsuarioLogado(usuario));
+            mostrarLoading('Validando acesso...', 'Conectando ao Radar 2030');
+            revalidarSessao()
+                .then((usuario) => setUsuarioLogado(usuario))
+                .catch(() => {})
+                .finally(() => esconderLoading());
         }
-    }, []);
+    }, [mostrarLoading, esconderLoading]);
 
     // Quando o usuário faz login (null -> usuário), vai direto para o painel home.
     useEffect(() => {
@@ -144,5 +150,13 @@ export default function App() {
 
             <Footer onNavigate={(tela) => setTelaAtual(tela)} />
         </div>
+    );
+}
+
+export default function App() {
+    return (
+        <LoadingProvider>
+            <ConteudoApp />
+        </LoadingProvider>
     );
 }

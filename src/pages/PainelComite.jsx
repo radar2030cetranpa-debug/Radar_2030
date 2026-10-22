@@ -3,6 +3,7 @@ import { contarTarefas } from '../services/progresso';
 import React, { useState, useEffect, useCallback } from 'react';
 import { listarPendentes, votarComite, avaliarComite, estatisticasComite, buscarHistoricoComite } from '../services/comite';
 import Swal from 'sweetalert2';
+import { RadarLoader } from '../components/RadarLoader';
 
 export function PainelComite({ usuarioLogado }) {
     const [pendentesComite, setPendentesComite] = useState([]);
@@ -166,8 +167,12 @@ export function PainelComite({ usuarioLogado }) {
 
             <div style={{ background: '#fff', borderRadius: '18px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 18px 55px rgba(15, 23, 42, 0.08)' }}>
                 {carregando ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                        <p style={{ margin: 0, fontSize: '1rem' }}>Carregando matrizes pendentes do servidor...</p>
+                    <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+                        <RadarLoader
+                            tamanho="md"
+                            mensagem="Carregando matrizes pendentes..."
+                            submensagem="Consultando pauta e deliberações do Comitê Gestor"
+                        />
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -306,7 +311,13 @@ export function PainelComite({ usuarioLogado }) {
                                     </div>
                                 )}
                                 {carregandoHistorico ? (
-                                    <p style={{ margin: 0, color: '#64748b' }}>Carregando revisões...</p>
+                                    <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+                                        <RadarLoader
+                                            tamanho="sm"
+                                            mostrarTextoLogo={false}
+                                            mensagem="Carregando histórico de revisões..."
+                                        />
+                                    </div>
                                 ) : historicoMatriz?.revisoes?.length ? (
                                     <div style={{ display: 'grid', gap: '0.65rem' }}>
                                         {[...historicoMatriz.revisoes].reverse().map((revisao) => {

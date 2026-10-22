@@ -13,7 +13,7 @@ import { exportarMatrizesAprovadasCSV, exportarMatrizesAprovadasExcel } from '..
 import { ApiError } from '../services/api';
 import { ehAdmin, ehComiteOuAdminGeral } from '../services/permissoes';
 import { obterPercentuaisPorAcao } from '../services/progresso';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo-recortada.png';
 import Swal from 'sweetalert2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -177,22 +177,22 @@ export function PainelAndamento({ usuarioLogado, onNavigate, telas = {} }) {
 
     if (!usuarioLogado) {
         return (
-            <div style={{ maxWidth: '800px', margin: '3.5rem auto', padding: '2rem 1.5rem', textAlign: 'center' }}>
+            <div style={{ maxWidth: '820px', margin: '3.5rem auto', padding: '2rem 1.5rem', textAlign: 'center' }}>
                 <img
                     src={logoImg}
                     alt="Logo Radar 2030"
                     style={{
-                        height: '75px',
-                        width: 'auto',
+                        width: 'min(100%, 380px)',
+                        height: 'auto',
                         objectFit: 'contain',
-                        margin: '0 auto 1.5rem auto',
+                        margin: '0 auto 1.75rem auto',
                         display: 'block'
                     }}
                 />
-                <h1 style={{ fontSize: '2.2rem', color: '#0f172a', margin: '0 0 0.5rem 0', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                <h1 style={{ fontSize: '2.3rem', color: '#0f172a', margin: '0 0 0.75rem 0', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
                     Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030
                 </h1>
-                <p style={{ fontSize: '1.05rem', color: '#64748b', lineHeight: 1.7, margin: '0 auto 2rem auto', maxWidth: '620px' }}>
+                <p style={{ fontSize: '1.1rem', color: '#64748b', lineHeight: 1.7, margin: '0 auto 2rem auto', maxWidth: '650px' }}>
                     Plataforma institucional do CETRAN-PA para planejamento, elaboração de matrizes 5W2H, acompanhamento de metas estratégicas e deliberação do Comitê Técnico.
                 </p>
 

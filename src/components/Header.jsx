@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/favicon-radar-2030.png';
 import Swal from 'sweetalert2';
 import { login as apiLogin, logout as apiLogout } from '../services/auth';
 import { ApiError } from '../services/api';
@@ -108,14 +108,15 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
         : '';
 
     return (
-        <header className="header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 2rem', background: '#ffffff', borderBottom: '1px solid #e2e8f0', minHeight: '70px' }}>
+        <header className="header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 2rem', background: '#ffffff', borderBottom: '1px solid #e2e8f0', minHeight: '76px' }}>
             <div className="header-brand" onClick={() => handleNavigate(HOME)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <img
                     src={logoImg}
                     alt="Logo Radar 2030"
                     style={{
-                        height: '42px',
-                        width: 'auto',
+                        width: '50px',
+                        maxWidth: '55vw',
+                        height: 'auto',
                         objectFit: 'contain',
                         display: 'block'
                     }}
@@ -338,7 +339,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                     <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '12px', width: '100%', maxWidth: '400px', position: 'relative', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
                         <span className="close" onClick={() => setModalLoginAberto(false)} style={{ position: 'absolute', top: '14px', right: '18px', cursor: 'pointer', fontSize: '1.5rem', color: '#64748b' }}>&times;</span>
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <img src={logoImg} alt="Logo Radar 2030" style={{ height: '40px', margin: '0 auto 0.75rem auto', display: 'block' }} />
+                            <img src={logoImg} alt="Logo Radar 2030" style={{ width: '180px', maxWidth: '100%', height: 'auto', margin: '0 auto 0.75rem auto', display: 'block' }} />
                             <h2 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>Acesso ao Radar 2030</h2>
                             <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030</p>
                         </div>

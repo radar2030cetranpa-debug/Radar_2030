@@ -3,13 +3,12 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
-import * as nodemailer from 'nodemailer';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
+import { MailService } from '../mail/mail.service';
+import { gerarTokenSenha, hashToken } from '../../common/utils/reset-token';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TrocarSenhaDto } from './dto/trocar-senha.dto';
@@ -20,13 +19,13 @@ import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
 const SEIS_MESES_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 // Token de recuperação de senha válido por 1 hora.
 const RESET_TOKEN_VALIDADE_MS = 60 * 60 * 1000;
-const EMAIL_CONTATO = 'radar2030cetranpa@gmail.com';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(email: string, senha: string): Promise<any> {
@@ -43,12 +42,7 @@ export class AuthService {
       return null;
     }
 
-    const {
-      senha: _,
-      resetToken: __,
-      resetTokenExpiry: ___,
-      ...result
-    } = usuario;
+    const { senha: _, resetToken: __, resetTokenExpiry: ___, ...result } = usuario;
     return result;
   }
 
@@ -59,9 +53,7 @@ export class AuthService {
     }
 
     if (!usuario.ativo) {
-      throw new UnauthorizedException(
-        'Usuário desativado. Entre em contato com o administrador.',
-      );
+      throw new UnauthorizedException('Usuário desativado. Entre em contato com o administrador.');
     }
 
     const senhaExpirada =
@@ -100,9 +92,7 @@ export class AuthService {
     const roleFinal = role || 'USUARIO';
 
     if ((roleFinal === 'USUARIO' || roleFinal === 'ADMIN_SETOR') && !setor) {
-      throw new BadRequestException(
-        'O campo "setor" é obrigatório para este perfil',
-      );
+      throw new BadRequestException('O campo "setor" é obrigatório para este perfil');
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
@@ -117,12 +107,7 @@ export class AuthService {
       },
     });
 
-    const {
-      senha: _,
-      resetToken: __,
-      resetTokenExpiry: ___,
-      ...result
-    } = usuario;
+    const { senha: _, resetToken: __, resetTokenExpiry: ___, ...result } = usuario;
     return result;
   }
 
@@ -143,9 +128,7 @@ export class AuthService {
   }
 
   async trocarSenha(userId: string, dto: TrocarSenhaDto) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { id: userId },
-    });
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: userId } });
 
     if (!usuario) {
       throw new NotFoundException('Usuário não encontrado');
@@ -169,6 +152,10 @@ export class AuthService {
     return { message: 'Senha alterada com sucesso' };
   }
 
+  /**
+   * Fluxo de recuperação de senha: gera um token de uso único (guardado só como hash)
+   * e o envia por e-mail via MailService.
+   */
   async recuperarSenha(dto: RecuperarSenhaDto) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
@@ -176,53 +163,37 @@ export class AuthService {
 
     // Não revela se o e-mail existe ou não, por segurança.
     if (!usuario) {
-      return {
-        message: 'Se o e-mail existir, um link de recuperação foi enviado.',
-      };
+      return { message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
+    const { token, hash } = gerarTokenSenha();
     const expiry = new Date(Date.now() + RESET_TOKEN_VALIDADE_MS);
 
     await this.prisma.usuario.update({
       where: { id: usuario.id },
       data: {
-        resetToken: token,
+        resetToken: hash,
         resetTokenExpiry: expiry,
       },
     });
 
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const user = process.env.SMTP_USER || EMAIL_CONTATO;
-    const pass = process.env.SMTP_PASS;
-    if (!pass) {
-      throw new ServiceUnavailableException('O serviço de e-mail não está configurado.');
+    await this.mailService.enviarTokenSenha(usuario.email, token, 'recuperacao', 1);
+
+    const resposta: { message: string; token?: string } = {
+      message: 'Se o e-mail existir, um link de recuperação foi enviado.',
+    };
+
+    // Só devolve o token na resposta com MAIL_PROVIDER=console fora de produção.
+    if (this.mailService.modoConsole) {
+      resposta.token = token;
     }
 
-    const transporter = nodemailer.createTransport({
-      host,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user, pass },
-    });
-
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || EMAIL_CONTATO,
-      to: usuario.email,
-      subject: '[Radar 2030] Definição de nova senha',
-      text: [
-        'Use o token abaixo para definir uma nova senha. Ele é válido por 1 hora.',
-        '',
-        token,
-      ].join('\n'),
-    });
-
-    return { message: 'Se o e-mail existir, um link de recuperação foi enviado.' };
+    return resposta;
   }
 
   async redefinirSenha(dto: RedefinirSenhaDto) {
     const usuario = await this.prisma.usuario.findFirst({
-      where: { resetToken: dto.token },
+      where: { resetToken: hashToken(dto.token) },
     });
 
     if (!usuario || !usuario.resetTokenExpiry) {
@@ -245,8 +216,6 @@ export class AuthService {
       },
     });
 
-    return {
-      message: 'Senha redefinida com sucesso. Faça login com a nova senha.',
-    };
+    return { message: 'Senha redefinida com sucesso. Faça login com a nova senha.' };
   }
 }

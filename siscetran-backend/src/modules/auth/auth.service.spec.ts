@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -38,6 +39,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: jwtService },
+        { provide: MailService, useValue: { enviarTokenSenha: jest.fn(), modoConsole: false } },
       ],
     }).compile();
 
@@ -75,10 +77,7 @@ describe('AuthService', () => {
     });
 
     it('deve lançar UnauthorizedException se o usuário estiver desativado', async () => {
-      prisma.usuario.findUnique.mockResolvedValue({
-        ...usuarioMock,
-        ativo: false,
-      });
+      prisma.usuario.findUnique.mockResolvedValue({ ...usuarioMock, ativo: false });
 
       await expect(
         authService.login({ email: 'admin@email.com', senha: 'admin123' }),

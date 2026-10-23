@@ -9,7 +9,8 @@ import { MatrizesModule } from './modules/matrizes/matrizes.module';
 import { AcoesModule } from './modules/acoes/acoes.module';
 import { ComiteModule } from './modules/comite/comite.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { SuporteModule } from './modules/suporte/suporte.module';
+import { LogsModule } from './modules/logs/logs.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { SuporteModule } from './modules/suporte/suporte.module';
     AcoesModule,
     ComiteModule,
     DashboardModule,
-    SuporteModule,
+    LogsModule,
+    MailModule,
   ],
 })
 export class AppModule {}

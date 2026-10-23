@@ -3,7 +3,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { MatrizesService } from './matrizes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LogsService } from '../logs/logs.service';
-import { Status } from '@prisma/client';
+import { Role, Status } from '@prisma/client';
 
 describe('MatrizesService', () => {
   let service: MatrizesService;
@@ -35,6 +35,50 @@ describe('MatrizesService', () => {
     }).compile();
 
     service = module.get<MatrizesService>(MatrizesService);
+  });
+
+  describe('ações em matrizes aprovadas', () => {
+    const matrizAprovada = {
+      ...matrizMock,
+      status: Status.APROVADO,
+      criadoPor: { setor: 'CTSIST' },
+    };
+
+    it('impede que Admin do Setor edite matriz aprovada', async () => {
+      prisma.matriz.findUnique.mockResolvedValue(matrizAprovada);
+
+      await expect(
+        service.update(
+          'matriz-1',
+          { nome: 'Alteração' },
+          { id: 'admin-setor', role: Role.ADMIN_SETOR, setor: 'CTSIST' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(prisma.matriz.update).not.toHaveBeenCalled();
+    });
+
+    it('impede que o autor exclua matriz aprovada', async () => {
+      prisma.matriz.findUnique.mockResolvedValue(matrizAprovada);
+
+      await expect(
+        service.remove('matriz-1', { id: 'user-1', role: Role.USUARIO }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('impede alterações de progresso por não Admin Geral', async () => {
+      prisma.matriz.findUnique.mockResolvedValue(matrizAprovada);
+
+      await expect(
+        service.atualizarProgresso(
+          'matriz-1',
+          { percentual: 50, acoes: [] },
+          { id: 'user-1', role: Role.USUARIO },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(prisma.matriz.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('enviarParaComite', () => {

@@ -1,5 +1,6 @@
 // src/components/ChecklistEtapas.jsx
 import React, { useState } from 'react';
+import { Article, CaretUp, PencilSimple } from '@phosphor-icons/react';
 import {
     calcularPercentualEtapa,
     calcularPercentualEtapas,
@@ -53,7 +54,7 @@ function FormularioTarefa({ tarefa, onChange }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.1rem' }}>
             <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="bi bi-pencil-square"></i>
+                    <PencilSimple size={16} weight="bold" aria-hidden="true" />
                     Explicar / Detalhar Tarefa (5W2H)
                 </span>
                 <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
@@ -93,7 +94,7 @@ function DetalhesTarefa({ tarefa }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem', marginTop: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.1rem' }}>
             <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="bi bi-card-text"></i>
+                    <Article size={16} weight="bold" aria-hidden="true" />
                     Detalhamento da Tarefa (5W2H)
                 </span>
             </div>
@@ -143,7 +144,9 @@ function CartaoTarefa({ tarefa, indice, editavelTitulos, editavelConclusao, onCh
                         gap: '6px'
                     }}
                 >
-                    <i className={`bi ${aberta ? 'bi-chevron-up' : 'bi-card-text'}`}></i>
+                    {aberta
+                        ? <CaretUp size={16} weight="bold" aria-hidden="true" />
+                        : <Article size={16} weight="bold" aria-hidden="true" />}
                     {aberta ? 'Ocultar Detalhes' : 'Explicar / Detalhar'}
                 </button>
                 {editavelTitulos && (

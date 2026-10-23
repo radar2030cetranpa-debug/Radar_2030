@@ -1,5 +1,6 @@
 // src/components/Footer.jsx
 import React from 'react';
+import { Headset } from '@phosphor-icons/react';
 
 export function Footer({ onNavigate }) {
     return (
@@ -37,7 +38,7 @@ export function Footer({ onNavigate }) {
                         padding: '0.25rem 0.5rem'
                     }}
                 >
-                    <i className="bi bi-headset" aria-hidden="true"></i>
+                    <Headset size={18} weight="bold" aria-hidden="true" />
                     Suporte técnico
                 </button>
             </div>

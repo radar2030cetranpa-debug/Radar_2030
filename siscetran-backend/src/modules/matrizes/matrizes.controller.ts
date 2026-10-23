@@ -136,8 +136,8 @@ export class MatrizesController {
   }
 
   @Patch(':id/progresso')
-  @Roles(Role.USUARIO, Role.ADMIN_SETOR, Role.ADMIN_GERAL)
-  @ApiOperation({ summary: 'Atualizar etapas e progresso de matriz aprovada' })
+  @Roles(Role.ADMIN_GERAL)
+  @ApiOperation({ summary: 'Atualizar etapas e progresso de matriz aprovada (apenas Admin Geral)' })
   @ApiResponse({ status: 200, description: 'Progresso atualizado com sucesso' })
   @ApiResponse({
     status: 400,

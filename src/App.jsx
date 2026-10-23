@@ -73,7 +73,11 @@ function ConteudoApp() {
     const abrirFormularioEdicao = (registro, origem) => {
         const acoes = (registro.acoes || registro.acoesEstrategicas || []).map(a => a.acao || a);
         setAcoesSelecionadas(acoes);
-        setModoFormulario('editar');
+        setModoFormulario(
+            registro.status === 'APROVADO' && usuarioLogado?.role === 'ADMIN_GERAL'
+                ? 'editar-aprovada'
+                : 'editar'
+        );
         setMatrizAtual(registro);
         setPaginaAnterior(origem || TELAS.CONSULTAR);
         setTelaAtual(TELAS.FORMULARIO);
@@ -82,7 +86,13 @@ function ConteudoApp() {
     const voltarPaginaAnterior = () => setTelaAtual(paginaAnterior || TELAS.CONSULTAR);
 
     const handleSalvoSucesso = () => {
-        setTelaAtual(paginaAnterior === TELAS.RASCUNHOS ? TELAS.RASCUNHOS : TELAS.CONSULTAR);
+        setTelaAtual(
+            paginaAnterior === TELAS.ADMIN
+                ? TELAS.ADMIN
+                : paginaAnterior === TELAS.RASCUNHOS
+                    ? TELAS.RASCUNHOS
+                    : TELAS.CONSULTAR
+        );
     };
 
     const renderizarTela = () => {
@@ -122,7 +132,12 @@ function ConteudoApp() {
             case TELAS.COMITE:
                 return <PainelComite usuarioLogado={usuarioLogado} />;
             case TELAS.ADMIN:
-                return <PainelAdmin usuarioLogado={usuarioLogado} />;
+                return (
+                    <PainelAdmin
+                        usuarioLogado={usuarioLogado}
+                        onEditarMatriz={(registro) => abrirFormularioEdicao(registro, TELAS.ADMIN)}
+                    />
+                );
             case TELAS.TROCAR_SENHA:
                 return <TrocarSenha onVoltar={() => setTelaAtual(TELAS.HOME)} />;
             case TELAS.RECUPERAR_SENHA:

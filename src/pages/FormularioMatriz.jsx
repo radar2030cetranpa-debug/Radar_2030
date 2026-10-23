@@ -1,5 +1,6 @@
 // src/pages/FormularioMatriz.jsx
 import React, { useState, useEffect } from 'react';
+import { PencilSimple } from '@phosphor-icons/react';
 import { ChecklistEtapas } from '../components/ChecklistEtapas';
 import { calcularPercentualEtapas } from '../services/progresso';
 import { 
@@ -7,7 +8,6 @@ import {
     criarMatriz, 
     atualizarMatriz, 
     enviarParaComite as enviarMatrizParaComite,
-    atualizarProgressoMatriz
 } from '../services/matrizes';
 import Swal from 'sweetalert2';
 import { RadarLoader } from '../components/RadarLoader';
@@ -17,7 +17,7 @@ export function FormularioMatriz({
     matrizId, 
     matrizExistente,
     acoesSelecionadas = [], 
-    usuarioLogado: _usuarioLogado, 
+    usuarioLogado,
     onVoltar, 
     onSalvoSucesso 
 }) {
@@ -76,7 +76,7 @@ export function FormularioMatriz({
     };
 
     useEffect(() => {
-        if (modo === 'editar') {
+        if (modo === 'editar' || modo === 'editar-aprovada') {
             const id = matrizId || matrizExistente?.id;
             if (id) {
                 carregarMatriz(id);
@@ -138,7 +138,7 @@ export function FormularioMatriz({
             const payload = montarPayload();
             const idAtual = matrizId || matrizExistente?.id;
             
-            if (modo === 'editar' && idAtual) {
+            if ((modo === 'editar' || modo === 'editar-aprovada') && idAtual) {
                 await atualizarMatriz(idAtual, payload);
             } else {
                 await criarMatriz(payload);
@@ -146,8 +146,10 @@ export function FormularioMatriz({
 
             Swal.fire({
                 icon: 'success',
-                title: 'Rascunho salvo!',
-                text: 'A matriz foi salva com sucesso.',
+                title: isEdicaoAprovadaAdmin ? 'Alterações salvas!' : 'Rascunho salvo!',
+                text: isEdicaoAprovadaAdmin
+                    ? 'A matriz aprovada foi atualizada com sucesso.'
+                    : 'A matriz foi salva com sucesso.',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -214,7 +216,7 @@ export function FormularioMatriz({
             const idAtual = matrizId || matrizExistente?.id;
             let targetId = idAtual;
 
-            if (modo === 'editar' && idAtual) {
+            if ((modo === 'editar' || modo === 'editar-aprovada') && idAtual) {
                 await atualizarMatriz(idAtual, payload);
             } else {
                 const response = await criarMatriz(payload);
@@ -245,48 +247,14 @@ export function FormularioMatriz({
         }
     };
 
-    const salvarProgressoAprovado = async () => {
-        setLoading(true);
-        try {
-            const payload = {
-                percentual: percentualGeral,
-                acoes: acoesComEtapas.map(a => ({
-                    acaoId: a.acaoId,
-                    etapas: a.etapas || []
-                }))
-            };
-            const idAtual = matrizId || matrizExistente?.id;
-            await atualizarProgressoMatriz(idAtual, payload);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Progresso atualizado!',
-                text: `O andamento da matriz foi salvo com sucesso (${percentualGeral}%).`,
-                timer: 2000,
-                showConfirmButton: false
-            });
-
-            if (onSalvoSucesso) onSalvoSucesso();
-        } catch (error) {
-            console.error('Erro ao atualizar progresso:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Erro ao atualizar',
-                text: error.message || 'Ocorreu um erro ao atualizar o progresso da matriz.',
-                confirmButtonColor: '#2563eb'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const isEdit = modo === 'editar';
-    const titulo = isEdit ? 'Editar Matriz' : 'Nova Matriz';
-    const podeEditar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE';
+    const isEdit = modo === 'editar' || modo === 'editar-aprovada';
+    const isEdicaoAprovadaAdmin = modo === 'editar-aprovada' && usuarioLogado?.role === 'ADMIN_GERAL';
+    const titulo = isEdicaoAprovadaAdmin ? 'Editar Matriz Aprovada' : (isEdit ? 'Editar Matriz' : 'Nova Matriz');
+    const podeEditar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE' || isEdicaoAprovadaAdmin;
     const podeEnviar = statusAtual === 'RASCUNHO' || statusAtual === 'PENDENTE';
-    const podeSalvarProgresso = statusAtual === 'APROVADO';
+    const podeSalvarProgresso = isEdicaoAprovadaAdmin;
     const comentarioAtivo = statusAtual === 'PENDENTE' && comentarioComite;
-    const podeEditarTitulosEtapas = modo === 'novo' || modoEdicaoEtapas;
+    const podeEditarTitulosEtapas = modo === 'novo' || modoEdicaoEtapas || isEdicaoAprovadaAdmin;
 
     if (carregandoDados) {
         return (
@@ -378,7 +346,7 @@ export function FormularioMatriz({
                             <span className="section-number">02</span>
                             <h2 className="section-title">Etapas e Tarefas de Execução</h2>
                         </div>
-                        {isEdit && (
+                        {isEdit && !isEdicaoAprovadaAdmin && (
                             <button
                                 type="button"
                                 className={`etapas-edit-button${modoEdicaoEtapas ? ' is-active' : ''}`}
@@ -387,7 +355,7 @@ export function FormularioMatriz({
                                 aria-label={modoEdicaoEtapas ? 'Desativar edição das etapas' : 'Editar etapas de execução'}
                                 title={modoEdicaoEtapas ? 'Concluir edição das etapas' : 'Editar etapas de execução'}
                             >
-                                <i className="bi bi-pencil-square" aria-hidden="true" />
+                                <PencilSimple size={18} weight="bold" aria-hidden="true" />
                             </button>
                         )}
                         <p className="section-description">
@@ -407,8 +375,8 @@ export function FormularioMatriz({
                                 etapas={acao.etapas}
                                 onChange={(novasEtapas) => handleEtapasChange(acao.acaoId, novasEtapas)}
                                 editavelTitulos={podeEditarTitulosEtapas}
-                                editavelConclusao={statusAtual === 'APROVADO'}
-                                disabled={!podeEditar && statusAtual !== 'APROVADO'}
+                                editavelConclusao={statusAtual === 'APROVADO' && isEdicaoAprovadaAdmin}
+                                disabled={!podeEditar && !(statusAtual === 'APROVADO' && isEdicaoAprovadaAdmin)}
                             />
                         ))}
                     </div>
@@ -427,9 +395,9 @@ export function FormularioMatriz({
                     
                     {podeEditar && (
                         <>
-                            <button 
-                                type="button" 
-                                onClick={salvarRascunho} 
+                            <button
+                                type="button"
+                                onClick={salvarRascunho}
                                 className="formulario-button-secondary"
                                 disabled={loading}
                             >
@@ -450,12 +418,12 @@ export function FormularioMatriz({
                     {podeSalvarProgresso && (
                         <button 
                             type="button" 
-                            onClick={salvarProgressoAprovado} 
+                            onClick={salvarRascunho}
                             className="formulario-button-primary"
                             disabled={loading}
                             style={{ background: '#16a34a' }}
                         >
-                            {loading ? 'Salvando...' : 'Salvar Andamento'}
+                            {loading ? 'Salvando...' : 'Salvar alterações'}
                         </button>
                     )}
                 </div>

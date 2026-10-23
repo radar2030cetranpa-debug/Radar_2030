@@ -1,6 +1,5 @@
 /* src/styles/global.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
 
 * {
     box-sizing: border-box;
@@ -646,7 +645,7 @@ button, input, select, textarea {
 
 .painel-metric-icon {
     font-size: 1.25rem;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .painel-metric-label {

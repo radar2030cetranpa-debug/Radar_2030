@@ -234,9 +234,18 @@ export class MatrizesService {
   ) {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
 
-    if (matriz.status === Status.ENVIADO || matriz.status === Status.APROVADO) {
+    if (
+      matriz.status === Status.APROVADO &&
+      solicitante.role !== Role.ADMIN_GERAL
+    ) {
+      throw new ForbiddenException(
+        'Somente Admin Geral pode editar matrizes aprovadas pelo Comitê Gestor',
+      );
+    }
+
+    if (matriz.status === Status.ENVIADO) {
       throw new BadRequestException(
-        'Matriz já enviada ou aprovada não pode ser editada',
+        'Matriz já enviada não pode ser editada',
       );
     }
 
@@ -290,9 +299,18 @@ export class MatrizesService {
   async remove(id: string, solicitante: UsuarioLogado) {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
 
-    if (matriz.status === Status.ENVIADO || matriz.status === Status.APROVADO) {
+    if (
+      matriz.status === Status.APROVADO &&
+      solicitante.role !== Role.ADMIN_GERAL
+    ) {
+      throw new ForbiddenException(
+        'Somente Admin Geral pode excluir matrizes aprovadas pelo Comitê Gestor',
+      );
+    }
+
+    if (matriz.status === Status.ENVIADO) {
       throw new BadRequestException(
-        'Matriz já enviada ou aprovada não pode ser removida',
+        'Matriz já enviada não pode ser removida',
       );
     }
 
@@ -490,6 +508,12 @@ export class MatrizesService {
     solicitante: UsuarioLogado,
   ) {
     const matriz = await this.verificarPermissaoEdicao(id, solicitante);
+
+    if (solicitante.role !== Role.ADMIN_GERAL) {
+      throw new ForbiddenException(
+        'Somente Admin Geral pode editar matrizes aprovadas pelo Comitê Gestor',
+      );
+    }
 
     if (matriz.status !== Status.APROVADO) {
       throw new BadRequestException(

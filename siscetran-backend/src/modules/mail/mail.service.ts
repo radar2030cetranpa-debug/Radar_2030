@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 export type TipoTokenSenha = 'convite' | 'recuperacao';
@@ -73,6 +73,36 @@ export class MailService {
     return this.enviar({ para, assunto, html, texto, tokenParaLog: token });
   }
 
+  async enviarEmailSuporte(msg: { para: string; replyTo: string; subject: string; text: string }) {
+    if (!msg.para) {
+      throw new ServiceUnavailableException('O destinatário do suporte não está configurado.');
+    }
+
+    try {
+      const email = {
+        para: msg.para,
+        replyTo: msg.replyTo,
+        assunto: msg.subject,
+        texto: msg.text,
+      };
+
+      switch (this.provider) {
+        case 'gmail_api':
+          await this.enviarGmailApi(email);
+          break;
+        case 'smtp':
+          await this.enviarSmtp(email);
+          break;
+        default:
+          throw new Error('MAIL_PROVIDER não configurado para envio.');
+      }
+      this.logger.log(`E-mail de suporte enviado para ${msg.para}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar solicitação de suporte: ${err?.message || err}`);
+      throw new ServiceUnavailableException('Não foi possível enviar a solicitação de suporte.');
+    }
+  }
+
   /** Retorna true se enviou; nunca lança (falha de e-mail não deve derrubar o cadastro). */
   private async enviar(msg: {
     para: string;
@@ -106,7 +136,13 @@ export class MailService {
   }
 
   // ---------- SMTP (nodemailer) ----------
-  private async enviarSmtp(msg: { para: string; assunto: string; html: string; texto: string }) {
+  private async enviarSmtp(msg: {
+    para: string;
+    assunto: string;
+    html?: string;
+    texto: string;
+    replyTo?: string;
+  }) {
     const port = Number(process.env.SMTP_PORT) || 465;
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -120,13 +156,20 @@ export class MailService {
       from: this.from,
       to: msg.para,
       subject: msg.assunto,
+      replyTo: msg.replyTo,
       text: msg.texto,
       html: msg.html,
     });
   }
 
   // ---------- Gmail API (HTTPS, sem SMTP) ----------
-  private async enviarGmailApi(msg: { para: string; assunto: string; html: string; texto: string }) {
+  private async enviarGmailApi(msg: {
+    para: string;
+    assunto: string;
+    html?: string;
+    texto: string;
+    replyTo?: string;
+  }) {
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -143,13 +186,16 @@ export class MailService {
     }
 
     const b64 = (s: string) => Buffer.from(s, 'utf-8').toString('base64');
-    const corpo = b64(msg.html).replace(/(.{76})/g, '$1\r\n');
+    const conteudo = msg.html || msg.texto;
+    const corpo = b64(conteudo).replace(/(.{76})/g, '$1\r\n');
+    const contentType = msg.html ? 'text/html' : 'text/plain';
     const mime = [
       `From: ${this.from}`,
       `To: ${msg.para}`,
+      ...(msg.replyTo ? [`Reply-To: ${msg.replyTo}`] : []),
       `Subject: =?UTF-8?B?${b64(msg.assunto)}?=`,
       'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=UTF-8',
+      `Content-Type: ${contentType}; charset=UTF-8`,
       'Content-Transfer-Encoding: base64',
       '',
       corpo,

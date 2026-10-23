@@ -1,5 +1,6 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import { CaretDown, Check, Eye, EyeSlash, Key, LockKey, SignOut, Users } from '@phosphor-icons/react';
 import logoImg from '../assets/favicon-radar-2030.png';
 import Swal from 'sweetalert2';
 import { login as apiLogin, logout as apiLogout } from '../services/auth';
@@ -182,15 +183,16 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                 {iniciaisUsuario}
                             </span>
                             {/* Ícone de seta */}
-                            <i
-                                className="bi bi-chevron-down"
+                            <CaretDown
+                                size={16}
+                                weight="bold"
+                                aria-hidden="true"
                                 style={{
-                                    fontSize: '0.7rem',
                                     color: '#64748b',
                                     transition: 'transform 0.2s ease',
                                     transform: dropdownUsuarioAberto ? 'rotate(180deg)' : 'rotate(0deg)'
                                 }}
-                            ></i>
+                            />
                         </button>
 
                         {/* Dropdown */}
@@ -262,11 +264,12 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     <button
                                         type="button"
                                         onClick={() => handleNavigate(COMITE)}
+                                        aria-current={telaAtual === COMITE ? 'page' : undefined}
                                         style={estiloItemDropdown(telaAtual === COMITE)}
                                     >
-                                        <i className="bi bi-people-fill" style={{ color: '#d97706', fontSize: '1rem' }}></i>
+                                        <Users size={16} weight="bold" style={{ color: '#d97706' }} aria-hidden="true" />
                                         <span>Painel Gestor</span>
-                                        {telaAtual === COMITE && <i className="bi bi-check2" style={{ marginLeft: 'auto', color: '#d97706' }}></i>}
+                                        {telaAtual === COMITE && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#d97706' }} aria-hidden="true" />}
                                     </button>
                                 )}
 
@@ -275,11 +278,12 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     <button
                                         type="button"
                                         onClick={() => handleNavigate(ADMIN)}
+                                        aria-current={telaAtual === ADMIN ? 'page' : undefined}
                                         style={estiloItemDropdown(telaAtual === ADMIN)}
                                     >
-                                        <i className="bi bi-shield-lock-fill" style={{ color: '#7c3aed', fontSize: '1rem' }}></i>
+                                        <LockKey size={16} weight="bold" style={{ color: '#7c3aed' }} aria-hidden="true" />
                                         <span>Administração</span>
-                                        {telaAtual === ADMIN && <i className="bi bi-check2" style={{ marginLeft: 'auto', color: '#7c3aed' }}></i>}
+                                        {telaAtual === ADMIN && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#7c3aed' }} aria-hidden="true" />}
                                     </button>
                                 )}
 
@@ -287,11 +291,12 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                 <button
                                     type="button"
                                     onClick={() => handleNavigate(TROCAR_SENHA)}
+                                    aria-current={telaAtual === TROCAR_SENHA ? 'page' : undefined}
                                     style={estiloItemDropdown(telaAtual === TROCAR_SENHA)}
                                 >
-                                    <i className="bi bi-key-fill" style={{ color: '#2563eb', fontSize: '1rem' }}></i>
+                                    <Key size={16} weight="bold" style={{ color: '#2563eb' }} aria-hidden="true" />
                                     <span>Trocar Senha</span>
-                                    {telaAtual === TROCAR_SENHA && <i className="bi bi-check2" style={{ marginLeft: 'auto', color: '#2563eb' }}></i>}
+                                    {telaAtual === TROCAR_SENHA && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#2563eb' }} aria-hidden="true" />}
                                 </button>
 
                                 {/* Separador */}
@@ -320,7 +325,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
                                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                                 >
-                                    <i className="bi bi-box-arrow-right" style={{ fontSize: '1rem' }}></i>
+                                    <SignOut size={16} weight="bold" aria-hidden="true" />
                                     <span>Sair</span>
                                 </button>
                             </div>
@@ -373,11 +378,16 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     placeholder="Sua senha"
                                     style={{ width: '100%', padding: '0.65rem 0.8rem', paddingRight: '40px', border: '1px solid #cbd5e1', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }}
                                 />
-                                <i
-                                    className={`bi ${mostrarSenha ? 'bi-eye-slash' : 'bi-eye'}`}
+                                <button
+                                    type="button"
                                     onClick={() => setMostrarSenha(!mostrarSenha)}
-                                    style={{ position: 'absolute', right: '12px', cursor: 'pointer', color: '#64748b', fontSize: '1.1rem' }}
-                                ></i>
+                                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                                    style={{ position: 'absolute', right: '8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b', padding: '4px' }}
+                                >
+                                    {mostrarSenha
+                                        ? <EyeSlash size={20} weight="bold" aria-hidden="true" />
+                                        : <Eye size={20} weight="bold" aria-hidden="true" />}
+                                </button>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.2rem' }}>

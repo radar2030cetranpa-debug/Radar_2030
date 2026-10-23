@@ -1,5 +1,6 @@
 // src/components/RadarLoader.jsx
 import React from 'react';
+import logoImg from '../assets/favicon-radar-2030.png';
 import '../styles/radarLoader.css';
 
 /**
@@ -91,18 +92,17 @@ export function RadarLoader({
                 {/* Tipografia 2030 institucional (quando habilitada) */}
                 {mostrarTextoLogo && (
                     <g>
-                        <text
-                            x="100"
-                            y="152"
-                            textAnchor="middle"
-                            fill="#144288"
-                            fontSize="44"
-                            fontWeight="900"
-                            letterSpacing="-1.5px"
-                            fontFamily="'Inter', system-ui, -apple-system, sans-serif"
+                        <svg
+                            x="17"
+                            y="113"
+                            width="166"
+                            height="56"
+                            viewBox="20 270 472 185"
+                            preserveAspectRatio="xMidYMid meet"
+                            aria-hidden="true"
                         >
-                            2030
-                        </text>
+                            <image href={logoImg} width="512" height="512" />
+                        </svg>
                         <text
                             x="100"
                             y="174"

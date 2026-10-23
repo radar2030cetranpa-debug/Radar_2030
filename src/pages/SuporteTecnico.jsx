@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ArrowClockwise, ArrowLeft, CheckCircle, FileText, Headset, LockKey, PaperPlaneRight, User } from '@phosphor-icons/react';
 import { api, ApiError } from '../services/api';
 
 export function SuporteTecnico({ onVoltar }) {
@@ -48,24 +49,27 @@ export function SuporteTecnico({ onVoltar }) {
                     </p>
                 </div>
                 <button type="button" onClick={onVoltar} style={estiloBotaoSecundario}>
-                    <i className="bi bi-arrow-left" aria-hidden="true" />
+                    <ArrowLeft size={18} weight="bold" aria-hidden="true" />
                     Voltar
                 </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={estiloCard}>
-                    <i className="bi bi-person-lock" style={estiloIcone('#2563eb')} aria-hidden="true" />
+                    <span style={{ ...estiloIcone('#2563eb'), display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }} aria-hidden="true">
+                        <User size={24} weight="regular" />
+                        <LockKey size={16} weight="bold" />
+                    </span>
                     <h2 style={estiloTituloCard}>Problemas de acesso</h2>
                     <p style={estiloTexto}>Confira se seu e-mail está correto e se a senha foi digitada respeitando letras maiúsculas e minúsculas.</p>
                 </div>
                 <div style={estiloCard}>
-                    <i className="bi bi-file-earmark-text" style={estiloIcone('#0f766e')} aria-hidden="true" />
+                    <FileText size={24} weight="regular" style={estiloIcone('#0f766e')} aria-hidden="true" />
                     <h2 style={estiloTituloCard}>Matrizes 5W2H</h2>
                     <p style={estiloTexto}>Use a área de rascunhos para continuar uma matriz salva e envie-a ao Comitê somente após revisar os campos.</p>
                 </div>
                 <div style={estiloCard}>
-                    <i className="bi bi-arrow-clockwise" style={estiloIcone('#d97706')} aria-hidden="true" />
+                    <ArrowClockwise size={24} weight="regular" style={estiloIcone('#d97706')} aria-hidden="true" />
                     <h2 style={estiloTituloCard}>A página não responde?</h2>
                     <p style={estiloTexto}>Atualize a página, confirme sua conexão e tente novamente. Se o problema persistir, registre os detalhes abaixo.</p>
                 </div>
@@ -106,7 +110,7 @@ export function SuporteTecnico({ onVoltar }) {
                     />
 
                     <button type="submit" disabled={enviando} style={{ ...estiloBotaoPrimario, opacity: enviando ? 0.7 : 1, cursor: enviando ? 'wait' : 'pointer' }}>
-                        <i className="bi bi-send" aria-hidden="true" />
+                        <PaperPlaneRight size={18} weight="bold" aria-hidden="true" />
                         {enviando ? 'Enviando...' : 'Enviar solicitação'}
                     </button>
                     {enviado && (
@@ -118,15 +122,15 @@ export function SuporteTecnico({ onVoltar }) {
                 </form>
 
                 <aside style={{ ...estiloCard, background: '#0f172a', color: '#fff' }}>
-                    <i className="bi bi-headset" style={{ fontSize: '1.8rem', color: '#93c5fd' }} aria-hidden="true" />
+                    <Headset size={29} weight="regular" style={{ color: '#93c5fd' }} aria-hidden="true" />
                     <h2 style={{ margin: '0.8rem 0 0.6rem', fontSize: '1.2rem' }}>Atendimento técnico</h2>
                     <p style={{ margin: 0, color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.92rem' }}>
                         Ao solicitar ajuda, informe seu usuário, a tela em que estava e uma mensagem de erro, se houver. Essas informações agilizam a análise.
                     </p>
                     <div style={{ borderTop: '1px solid #334155', marginTop: '1.25rem', paddingTop: '1rem', display: 'grid', gap: '0.65rem', color: '#e2e8f0', fontSize: '0.88rem' }}>
-                        <span><i className="bi bi-check2-circle" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Descreva os passos realizados</span>
-                        <span><i className="bi bi-check2-circle" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Informe quando o problema começou</span>
-                        <span><i className="bi bi-check2-circle" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Anexe evidências ao contato externo, se necessário</span>
+                        <span><CheckCircle size={16} weight="bold" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Descreva os passos realizados</span>
+                        <span><CheckCircle size={16} weight="bold" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Informe quando o problema começou</span>
+                        <span><CheckCircle size={16} weight="bold" style={{ color: '#86efac', marginRight: '0.5rem' }} aria-hidden="true" />Anexe evidências ao contato externo, se necessário</span>
                     </div>
                 </aside>
             </div>

@@ -11,6 +11,7 @@ import { ComiteModule } from './modules/comite/comite.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LogsModule } from './modules/logs/logs.module';
 import { MailModule } from './modules/mail/mail.module';
+import { SuporteModule } from './modules/suporte/suporte.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MailModule } from './modules/mail/mail.module';
     DashboardModule,
     LogsModule,
     MailModule,
+    SuporteModule,
   ],
 })
 export class AppModule {}

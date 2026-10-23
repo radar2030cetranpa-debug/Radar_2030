@@ -1,5 +1,7 @@
 // src/pages/PainelAdmin.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import * as XLSX from 'xlsx';
+import { Info, PaperPlaneRight } from '@phosphor-icons/react';
 import {
     listarUsuarios,
     criarUsuario,
@@ -10,6 +12,7 @@ import {
     atualizarRoleUsuario
 } from '../services/usuarios';
 import { importarAcoes, listarAcoes, atualizarAcao, removerAcao } from '../services/acoes';
+import { listarMatrizes, removerMatriz } from '../services/matrizes';
 import { ApiError } from '../services/api';
 import { labelRole } from '../services/permissoes';
 import { SETORES_RADAR } from '../services/progresso';
@@ -38,7 +41,7 @@ const acaoVazia = {
     restricoes: ''
 };
 
-export function PainelAdmin({ usuarioLogado }) {
+export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
     const [pagina, setPagina] = useState('usuarios');
     const [usuarios, setUsuarios] = useState([]);
     const [carregando, setCarregando] = useState(true);
@@ -46,21 +49,27 @@ export function PainelAdmin({ usuarioLogado }) {
     const [mostrarForm, setMostrarForm] = useState(false);
     const [form, setForm] = useState(formVazio);
     const [busca, setBusca] = useState('');
+    const [setoresPendentes, setSetoresPendentes] = useState({});
     const [mostrarFormAcoes, setMostrarFormAcoes] = useState(false);
     const [acoesForm, setAcoesForm] = useState([{ ...acaoVazia }]);
     const [enviandoAcoes, setEnviandoAcoes] = useState(false);
+    const [arquivoImportado, setArquivoImportado] = useState('');
     const [acoes, setAcoes] = useState([]);
     const [carregandoAcoes, setCarregandoAcoes] = useState(false);
     const [buscaAcao, setBuscaAcao] = useState('');
     const [acaoEditando, setAcaoEditando] = useState(null);
     const [salvandoAcao, setSalvandoAcao] = useState(false);
+    const [matrizesAprovadas, setMatrizesAprovadas] = useState([]);
+    const [carregandoMatrizes, setCarregandoMatrizes] = useState(false);
     const ehAdminGeral = usuarioLogado?.role === 'ADMIN_GERAL';
 
     const carregarUsuarios = useCallback(async () => {
         setCarregando(true);
         try {
             const dados = await listarUsuarios(busca);
-            setUsuarios(Array.isArray(dados) ? dados : []);
+            const lista = Array.isArray(dados) ? dados : [];
+            setUsuarios(lista);
+            setSetoresPendentes(Object.fromEntries(lista.map(usuario => [usuario.id, usuario.setor || ''])));
         } catch (err) {
             const msg = err instanceof ApiError ? err.message : 'Erro ao carregar usuários.';
             Swal.fire({ icon: 'error', title: 'Erro', text: msg, confirmButtonColor: '#2563eb' });
@@ -89,6 +98,23 @@ export function PainelAdmin({ usuarioLogado }) {
     useEffect(() => {
         if (pagina === 'editar-dashboard') carregarAcoes();
     }, [pagina, carregarAcoes]);
+
+    const carregarMatrizesAprovadas = useCallback(async () => {
+        setCarregandoMatrizes(true);
+        try {
+            const dados = await listarMatrizes({ status: 'APROVADO' });
+            setMatrizesAprovadas(Array.isArray(dados) ? dados : []);
+        } catch (err) {
+            const msg = err instanceof ApiError ? err.message : 'Erro ao carregar matrizes aprovadas.';
+            Swal.fire({ icon: 'error', title: 'Erro', text: msg, confirmButtonColor: '#2563eb' });
+        } finally {
+            setCarregandoMatrizes(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (pagina === 'editar-dashboard') carregarMatrizesAprovadas();
+    }, [pagina, carregarMatrizesAprovadas]);
 
     const handleCriarUsuario = async (e) => {
         e.preventDefault();
@@ -215,7 +241,7 @@ export function PainelAdmin({ usuarioLogado }) {
         }
     };
 
-    const handleAlterarSetorUsuario = async (usuario, setor) => {
+    const handleAlterarSetorUsuario = (usuario, setor) => {
         if (!setor && (usuario.role === 'USUARIO' || usuario.role === 'ADMIN_SETOR')) {
             Swal.fire({
                 icon: 'warning',
@@ -225,14 +251,163 @@ export function PainelAdmin({ usuarioLogado }) {
             });
             return;
         }
-        try {
-            await atualizarUsuario(usuario.id, { setor: setor || null });
-            await carregarUsuarios();
-            Swal.fire({ icon: 'success', title: 'Setor atualizado!', timer: 1300, showConfirmButton: false });
-        } catch (err) {
-            const msg = err instanceof ApiError ? err.message : 'Erro ao alterar setor do usuário.';
-            Swal.fire({ icon: 'error', title: 'Erro', text: msg, confirmButtonColor: '#2563eb' });
+        setSetoresPendentes(setores => ({ ...setores, [usuario.id]: setor }));
+    };
+
+    const salvarSetoresUsuarios = async () => {
+        const alteracoes = usuarios.filter(usuario =>
+            (setoresPendentes[usuario.id] || '') !== (usuario.setor || '')
+        );
+        if (alteracoes.length === 0) return;
+
+        const resultados = await Promise.allSettled(alteracoes.map(usuario =>
+            atualizarUsuario(usuario.id, { setor: setoresPendentes[usuario.id] || null })
+        ));
+        const falhas = [];
+        const idsSalvos = [];
+        resultados.forEach((resultado, indice) => {
+            if (resultado.status === 'fulfilled') idsSalvos.push(alteracoes[indice].id);
+            else falhas.push(alteracoes[indice].email);
+        });
+
+        if (idsSalvos.length > 0) {
+            setUsuarios(prev => prev.map(usuario => idsSalvos.includes(usuario.id)
+                ? { ...usuario, setor: setoresPendentes[usuario.id] || null }
+                : usuario
+            ));
+            Swal.fire({
+                icon: falhas.length ? 'warning' : 'success',
+                title: falhas.length ? 'Salvamento parcial' : 'Alterações salvas',
+                text: falhas.length
+                    ? `Setores atualizados para ${idsSalvos.length} usuário(s). Falha ao salvar: ${falhas.join(', ')}.`
+                    : `Setores atualizados para ${idsSalvos.length} usuário(s).`,
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro ao salvar',
+                text: `Não foi possível atualizar os setores de: ${falhas.join(', ')}.`,
+                confirmButtonColor: '#2563eb'
+            });
         }
+    };
+
+    const importarPlanilhaAcoes = async (arquivo) => {
+        if (!arquivo) return;
+        try {
+            const workbook = XLSX.read(await arquivo.arrayBuffer(), { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const linhas = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            const normalizarCabecalho = valor => String(valor || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '');
+            const aliases = {
+                id: ['id', 'codigo', 'codigoacao', 'codigodaacao', 'codigodaacaoestrategica', 'acaoid', 'iddaacao', 'iddaacaoestrategica', 'acaoestrategica'],
+                diretriz: ['diretriz', 'diretrizacao', 'diretriziniciativa', 'descricao', 'descricaoacao', 'acao'],
+                prazo: ['prazo', 'prazodeexecucao', 'horizonte'],
+                meta: ['meta', 'metas'],
+                indicador: ['indicador', 'indicadores'],
+                linhaPlanilha: ['linhaplanilha', 'linhadaplanilha', 'linha', 'numerolinha', 'numerodelinha', 'linhadaacao'],
+                og: ['og', 'objetivogeral'],
+                lae: ['lae', 'linhadeacao'],
+                setor: ['setor', 'setores'],
+                responsavel: ['responsavel', 'responsaveis'],
+                restricoes: ['restricoes', 'restricao']
+            };
+            const indiceCabecalho = linhas.findIndex(linha => {
+                const cabecalhos = linha.map(normalizarCabecalho);
+                return aliases.id.some(alias => cabecalhos.includes(alias)) &&
+                    aliases.diretriz.some(alias => cabecalhos.includes(alias));
+            });
+            if (indiceCabecalho < 0) {
+                throw new Error('Não encontrei cabeçalhos para ID e Diretriz na primeira planilha.');
+            }
+
+            const cabecalhos = linhas[indiceCabecalho].map(normalizarCabecalho);
+            const indices = Object.fromEntries(Object.entries(aliases).map(([campo, opcoes]) => [
+                campo,
+                cabecalhos.findIndex(cabecalho => opcoes.includes(cabecalho))
+            ]));
+            const obter = (linha, campo) => indices[campo] >= 0 ? String(linha[indices[campo]] ?? '').trim() : '';
+            const linhasDados = linhas.slice(indiceCabecalho + 1);
+            const importadas = [];
+            const erros = [];
+
+            linhasDados.forEach((linha, indice) => {
+                if (!linha.some(celula => String(celula ?? '').trim())) return;
+                const prazoTexto = obter(linha, 'prazo').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                const prazo = prazoTexto.includes('curto') ? 'CURTO_PRAZO'
+                    : prazoTexto.includes('medio') ? 'MEDIO_PRAZO'
+                        : prazoTexto.includes('longo') ? 'LONGO_PRAZO' : '';
+                const acao = {
+                    id: obter(linha, 'id'),
+                    diretriz: obter(linha, 'diretriz'),
+                    prazo,
+                    meta: obter(linha, 'meta'),
+                    indicador: obter(linha, 'indicador'),
+                    linhaPlanilha: obter(linha, 'linhaPlanilha'),
+                    og: obter(linha, 'og'),
+                    lae: obter(linha, 'lae'),
+                    setor: obter(linha, 'setor'),
+                    responsavel: obter(linha, 'responsavel'),
+                    restricoes: obter(linha, 'restricoes')
+                };
+                if (!acao.linhaPlanilha) acao.linhaPlanilha = String(indice + indiceCabecalho + 2);
+                const faltantes = ['id', 'diretriz', 'meta', 'indicador'].filter(campo => !acao[campo]);
+                if (!acao.prazo) faltantes.push('prazo (Curto, Médio ou Longo)');
+                if (!Number.isInteger(Number(acao.linhaPlanilha))) faltantes.push('linhaPlanilha numérica');
+                if (faltantes.length > 0) {
+                    erros.push(`Linha ${indice + indiceCabecalho + 2}: faltam ${faltantes.join(', ')}.`);
+                } else {
+                    importadas.push(acao);
+                }
+            });
+
+            if (erros.length > 0) {
+                throw new Error(`A planilha tem dados inválidos:\n${erros.slice(0, 8).join('\n')}${erros.length > 8 ? `\n... e mais ${erros.length - 8} erro(s).` : ''}`);
+            }
+            if (importadas.length === 0) throw new Error('A planilha não contém linhas de ações para importar.');
+
+            setAcoesForm(importadas);
+            setArquivoImportado(arquivo.name);
+            setMostrarFormAcoes(true);
+            Swal.fire({
+                icon: 'success',
+                title: 'Planilha carregada',
+                text: `${importadas.length} ação(ões) pronta(s) para conferência. Clique em "Importar ações" para salvar.`,
+                confirmButtonColor: '#2563eb'
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro ao ler planilha',
+                text: err instanceof Error ? err.message : 'Não foi possível interpretar o arquivo.',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+    };
+
+    const baixarModeloPlanilha = () => {
+        const modelo = [{
+            ID: 'AE 1.1.1.1',
+            Diretriz: 'Descrição da ação',
+            Prazo: 'Curto Prazo',
+            Meta: 'Meta da ação',
+            Indicador: 'Indicador da ação',
+            LinhaPlanilha: 2,
+            OG: '',
+            LAE: '',
+            Setor: 'CTSIST',
+            Responsavel: '',
+            Restricoes: ''
+        }];
+        const worksheet = XLSX.utils.json_to_sheet(modelo);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Acoes');
+        XLSX.writeFile(workbook, 'modelo-importacao-acoes.xlsx');
     };
 
     const podeGerenciarUsuario = (usuario) => (
@@ -244,10 +419,6 @@ export function PainelAdmin({ usuarioLogado }) {
         setAcoesForm(linhas => linhas.map((linha, index) => (
             index === indice ? { ...linha, [campo]: valor } : linha
         )));
-    };
-
-    const adicionarLinhaAcao = () => {
-        setAcoesForm(linhas => [...linhas, { ...acaoVazia }]);
     };
 
     const removerLinhaAcao = (indice) => {
@@ -292,6 +463,7 @@ export function PainelAdmin({ usuarioLogado }) {
             if (resultado.sucesso > 0) {
                 setAcoesForm([{ ...acaoVazia }]);
                 setMostrarFormAcoes(false);
+                setArquivoImportado('');
                 setPagina('editar-dashboard');
             }
         } catch (err) {
@@ -372,6 +544,29 @@ export function PainelAdmin({ usuarioLogado }) {
         }
     };
 
+    const handleRemoverMatrizAprovada = async (matriz) => {
+        const resultado = await Swal.fire({
+            title: 'Excluir matriz aprovada?',
+            text: `A matriz "${matriz.nome}" e seu histórico serão removidos permanentemente.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Excluir matriz',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!resultado.isConfirmed) return;
+
+        try {
+            await removerMatriz(matriz.id);
+            await carregarMatrizesAprovadas();
+            Swal.fire({ icon: 'success', title: 'Matriz excluída!', timer: 1500, showConfirmButton: false });
+        } catch (err) {
+            const msg = err instanceof ApiError ? err.message : 'Erro ao excluir matriz aprovada.';
+            Swal.fire({ icon: 'error', title: 'Erro', text: msg, confirmButtonColor: '#2563eb' });
+        }
+    };
+
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
@@ -382,7 +577,7 @@ export function PainelAdmin({ usuarioLogado }) {
             <nav aria-label="Seções do painel administrativo" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
                 <BotaoPagina ativo={pagina === 'usuarios'} onClick={() => setPagina('usuarios')}>Usuários</BotaoPagina>
                 {ehAdminGeral && (
-                    <BotaoPagina ativo={pagina === 'adicionar-acoes'} onClick={() => { setPagina('adicionar-acoes'); setMostrarFormAcoes(true); }}>Adicionar ações</BotaoPagina>
+                    <BotaoPagina ativo={pagina === 'adicionar-acoes'} onClick={() => setPagina('adicionar-acoes')}>Adicionar ações</BotaoPagina>
                 )}
                 <BotaoPagina ativo={pagina === 'editar-dashboard'} onClick={() => setPagina('editar-dashboard')}>Editar dados do dashboard</BotaoPagina>
             </nav>
@@ -399,6 +594,15 @@ export function PainelAdmin({ usuarioLogado }) {
                             onChange={e => setBusca(e.target.value)}
                             style={{ padding: '0.5rem 0.8rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9rem', minWidth: '200px' }}
                         />
+                        {usuarios.some(usuario => (setoresPendentes[usuario.id] || '') !== (usuario.setor || '')) && (
+                            <button
+                                type="button"
+                                onClick={salvarSetoresUsuarios}
+                                style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                Salvar alterações
+                            </button>
+                        )}
                         <button
                             onClick={() => setMostrarForm(v => !v)}
                             style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
@@ -441,7 +645,7 @@ export function PainelAdmin({ usuarioLogado }) {
                             </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#1e40af' }}>
-                            <i className="bi bi-info-circle-fill"></i>
+                            <Info size={16} weight="bold" aria-hidden="true" />
                             <span>O usuário receberá um link seguro para cadastrar e confirmar sua própria senha no primeiro acesso.</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-end', gridColumn: '1 / -1', marginTop: '0.25rem' }}>
@@ -450,7 +654,7 @@ export function PainelAdmin({ usuarioLogado }) {
                                 disabled={enviando}
                                 style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.65rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                             >
-                                <i className="bi bi-send-fill"></i>
+                                <PaperPlaneRight size={18} weight="bold" aria-hidden="true" />
                                 {enviando ? 'Cadastrando...' : 'Enviar Convite e Cadastrar'}
                             </button>
                         </div>
@@ -500,8 +704,9 @@ export function PainelAdmin({ usuarioLogado }) {
                                         <td style={{ padding: '8px 12px', minWidth: '190px' }}>
                                             <select
                                                 aria-label={`Setor de ${u.email}`}
-                                                value={u.setor || ''}
+                                                value={setoresPendentes[u.id] ?? u.setor ?? ''}
                                                 onChange={e => handleAlterarSetorUsuario(u, e.target.value)}
+                                                disabled={u.id === usuarioLogado?.id && !ehAdminGeral}
                                                 style={{ ...estiloInput, padding: '0.4rem 0.5rem', minWidth: '180px' }}
                                             >
                                                 <option value="" disabled={u.role === 'USUARIO' || u.role === 'ADMIN_SETOR'}>Sem setor</option>
@@ -546,20 +751,29 @@ export function PainelAdmin({ usuarioLogado }) {
 
             {/* Seção de Ações Estratégicas Base */}
             {pagina === 'adicionar-acoes' && ehAdminGeral && <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '1rem' }}>
-                    <h3 style={{ color: '#334155', margin: 0 }}>Adicionar ações estratégicas</h3>
-                    <button
-                        type="button"
-                        onClick={() => setMostrarFormAcoes(v => !v)}
-                        style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                        {mostrarFormAcoes ? 'Fechar formulário' : '+ Adicionar ações'}
-                    </button>
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+                    <h4 style={{ margin: '0 0 0.4rem', color: '#1e3a8a' }}>Importar ações em lote</h4>
+                    <p style={{ margin: '0 0 0.8rem', color: '#475569', fontSize: '0.9rem' }}>
+                        Selecione um arquivo Excel ou CSV. Use os cabeçalhos ID, Diretriz, Prazo, Meta, Indicador e, opcionalmente, LinhaPlanilha, OG, LAE, Setor, Responsavel e Restricoes. O arquivo será carregado para conferência; nada é salvo até clicar em importar.
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <input
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            aria-label="Selecionar planilha de ações"
+                            onChange={e => importarPlanilhaAcoes(e.target.files?.[0])}
+                            style={{ maxWidth: '100%' }}
+                        />
+                        <button type="button" onClick={baixarModeloPlanilha} style={botaoSecundario}>
+                            Baixar modelo de planilha
+                        </button>
+                    </div>
+                    {arquivoImportado && <p style={{ margin: '0.7rem 0 0', color: '#166534', fontSize: '0.88rem' }}>Planilha carregada: {arquivoImportado}. Revise as linhas abaixo antes de importar.</p>}
                 </div>
 
                 {mostrarFormAcoes && (
                     <form onSubmit={handleImportarAcoes} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
-                        <p style={{ color: '#475569', fontSize: '0.9rem', marginTop: 0 }}>Adicione uma ou várias ações de uma vez. Os campos com * são obrigatórios.</p>
+                        <p style={{ color: '#475569', fontSize: '0.9rem', marginTop: 0 }}>Confira os dados importados da planilha. Os campos com * são obrigatórios.</p>
                         {acoesForm.map((linha, indice) => (
                             <div key={indice} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', padding: '1rem 0', borderTop: '1px solid #e2e8f0' }}>
                                 <CampoAcao label="ID *" value={linha.id} onChange={valor => atualizarAcaoForm(indice, 'id', valor)} placeholder="AE 1.1.1.1" />
@@ -592,11 +806,8 @@ export function PainelAdmin({ usuarioLogado }) {
                             </div>
                         ))}
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            <button type="button" onClick={adicionarLinhaAcao} style={{ background: '#fff', color: '#2563eb', border: '1px solid #93c5fd', padding: '0.55rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
-                                + Outra ação
-                            </button>
                             <button type="submit" disabled={enviandoAcoes} style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.55rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: enviandoAcoes ? 'wait' : 'pointer' }}>
-                                {enviandoAcoes ? 'Adicionando...' : 'Adicionar ações'}
+                                {enviandoAcoes ? 'Importando...' : 'Importar ações'}
                             </button>
                         </div>
                     </form>
@@ -609,11 +820,57 @@ export function PainelAdmin({ usuarioLogado }) {
                     <h3 style={{ color: '#334155', margin: 0 }}>Editar dados do dashboard</h3>
                     <p style={{ color: '#64748b', margin: '0.35rem 0 0' }}>
                         {ehAdminGeral
-                            ? 'Edite os dados das ações estratégicas. Somente Admin Geral pode excluir ações.'
-                            : 'Admin do Setor pode alterar o setor de qualquer ação.'}
+                            ? 'Matrizes aprovadas podem ser editadas ou excluídas somente por Admin Geral. As alterações precisam ser salvas explicitamente.'
+                            : 'As matrizes aprovadas são exibidas para consulta. Somente Admin Geral pode editá-las ou excluí-las. Você pode alterar os setores das ações abaixo.'}
                     </p>
                 </div>
 
+                <h4 style={{ color: '#334155', margin: '1.25rem 0 0.75rem' }}>Matrizes aprovadas pelo Comitê Gestor</h4>
+                <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
+                    {carregandoMatrizes ? (
+                        <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
+                            <RadarLoader tamanho="md" mensagem="Carregando matrizes aprovadas..." submensagem="Consultando decisões do Comitê Gestor" />
+                        </div>
+                    ) : matrizesAprovadas.length === 0 ? (
+                        <p style={{ padding: '1.5rem', textAlign: 'center', color: '#64748b' }}>Nenhuma matriz aprovada encontrada.</p>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
+                                    <th style={{ padding: '12px' }}>ID</th>
+                                    <th style={{ padding: '12px' }}>Matriz / Ação</th>
+                                    <th style={{ padding: '12px' }}>Autor</th>
+                                    <th style={{ padding: '12px' }}>Progresso</th>
+                                    {ehAdminGeral && <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {matrizesAprovadas.map(matriz => (
+                                    <tr key={matriz.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '12px', color: '#2563eb', fontWeight: 700, whiteSpace: 'nowrap' }}>{matriz.id}</td>
+                                        <td style={{ padding: '12px', color: '#1e293b' }}>{matriz.nome}</td>
+                                        <td style={{ padding: '12px', color: '#64748b' }}>{matriz.criadoPor?.email || '—'}</td>
+                                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{matriz.percentual || 0}%</td>
+                                        {ehAdminGeral && (
+                                            <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                                <button type="button" onClick={() => onEditarMatriz?.(matriz)} style={botaoSecundario}>Editar</button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoverMatrizAprovada(matriz)}
+                                                    style={{ ...botaoSecundario, color: '#dc2626', borderColor: '#fecaca', marginLeft: '0.4rem' }}
+                                                >
+                                                    Excluir
+                                                </button>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                <h4 style={{ color: '#334155', margin: '1.25rem 0 0.75rem' }}>Ações estratégicas e setores do dashboard</h4>
                 <input
                     type="search"
                     value={buscaAcao}

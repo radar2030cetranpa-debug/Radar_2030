@@ -1,6 +1,7 @@
 // src/pages/ConsultarMatrizes.jsx
 import { contarTarefas, calcularPercentualEtapas, calcularPercentualEtapa } from '../services/progresso';
 import React, { useState, useEffect, useCallback } from 'react';
+import { Eye, PencilSimple, Trash } from '@phosphor-icons/react';
 import { listarMatrizes, removerMatriz } from '../services/matrizes';
 import Swal from 'sweetalert2';
 import { RadarLoader } from '../components/RadarLoader';
@@ -95,25 +96,29 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
     };
 
     const podeEditar = (reg) => {
+        if (reg.status === 'APROVADO') {
+            return usuarioLogado?.role === 'ADMIN_GERAL';
+        }
         const autorId = reg.criadoPor?.id || reg.usuarioId;
         const autorEmail = reg.criadoPor?.email || (typeof reg.criadoPor === 'string' ? reg.criadoPor : '');
         const ehAutor = (usuarioLogado?.id && autorId === usuarioLogado.id) ||
                         (usuarioLogado?.email && autorEmail === usuarioLogado.email);
         const ehAdmin = usuarioLogado?.role === 'ADMIN_GERAL' || usuarioLogado?.role === 'ADMIN_SETOR';
 
-        // Rascunhos e Pendentes podem ser editados; Aprovadas podem ter progresso atualizado
         return ehAutor || ehAdmin;
     };
 
     const podeExcluir = (reg) => {
+        if (reg.status === 'APROVADO') {
+            return usuarioLogado?.role === 'ADMIN_GERAL';
+        }
         const autorId = reg.criadoPor?.id || reg.usuarioId;
         const autorEmail = reg.criadoPor?.email || (typeof reg.criadoPor === 'string' ? reg.criadoPor : '');
         const ehAutor = (usuarioLogado?.id && autorId === usuarioLogado.id) ||
                         (usuarioLogado?.email && autorEmail === usuarioLogado.email);
         const ehAdmin = usuarioLogado?.role === 'ADMIN_GERAL';
 
-        // Não permite excluir matrizes já aprovadas
-        return (ehAutor || ehAdmin) && reg.status !== 'APROVADO';
+        return ehAutor || ehAdmin;
     };
 
     return (
@@ -193,16 +198,16 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                                                     aria-label="Ver matriz"
                                                     style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', marginRight: '8px', fontWeight: 'bold', fontSize: '1.1rem' }}
                                                 >
-                                                    <i className="bi bi-eye-fill" aria-hidden="true" />
+                                                    <Eye size={18} weight="bold" aria-hidden="true" />
                                                 </button>
                                                 {podeEditar(reg) && (
                                                     <button
                                                         onClick={() => onEditar && onEditar(reg)}
-                                                        title={reg.status === 'APROVADO' ? 'Andamento da matriz' : 'Editar matriz'}
-                                                        aria-label={reg.status === 'APROVADO' ? 'Andamento da matriz' : 'Editar matriz'}
+                                                        title={reg.status === 'APROVADO' ? 'Editar matriz aprovada' : 'Editar matriz'}
+                                                        aria-label={reg.status === 'APROVADO' ? 'Editar matriz aprovada' : 'Editar matriz'}
                                                         style={{ background: 'transparent', border: 'none', color: '#558BC9', cursor: 'pointer', marginRight: '8px', fontWeight: 'bold', fontSize: '1.1rem' }}
                                                     >
-                                                        <i className={reg.status === 'APROVADO' ? 'bi bi-file-text' : 'bi bi-pencil-square'} aria-hidden="true" />
+                                                        <PencilSimple size={18} weight="bold" aria-hidden="true" />
                                                     </button>
                                                 )}
                                                 {podeExcluir(reg) && (
@@ -212,7 +217,7 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                                                         aria-label="Excluir matriz"
                                                         style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
                                                     >
-                                                        <i className="bi bi-trash3-fill" aria-hidden="true" />
+                                                        <Trash size={18} weight="bold" aria-hidden="true" />
                                                     </button>
                                                 )}
                                             </td>

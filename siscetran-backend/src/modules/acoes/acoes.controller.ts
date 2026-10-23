@@ -16,6 +16,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { CreateAcaoDto } from './dto/create-acao.dto';
 import { UpdateAcaoDto } from './dto/update-acao.dto';
+import { User } from '../../common/decorators/user.decorator';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -79,12 +80,16 @@ export class AcoesController {
   }
 
   @Put(':id')
-  @Roles(Role.ADMIN_GERAL)
-  @ApiOperation({ summary: 'Atualizar ação (admin apenas)' })
+  @Roles(Role.ADMIN_SETOR, Role.ADMIN_GERAL)
+  @ApiOperation({ summary: 'Atualizar ação (setor para Admin do Setor; dados completos para Admin Geral)' })
   @ApiResponse({ status: 200, description: 'Ação atualizada' })
   @ApiResponse({ status: 404, description: 'Ação não encontrada' })
-  async update(@Param('id') id: string, @Body() updateAcaoDto: UpdateAcaoDto) {
-    return this.acoesService.update(id, updateAcaoDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateAcaoDto: UpdateAcaoDto,
+    @User() usuario: { id: string; role: Role; setor?: string | null },
+  ) {
+    return this.acoesService.update(id, updateAcaoDto, usuario);
   }
 
   @Delete(':id')

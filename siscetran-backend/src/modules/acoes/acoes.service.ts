@@ -3,11 +3,12 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAcaoDto } from './dto/create-acao.dto';
 import { UpdateAcaoDto } from './dto/update-acao.dto';
-import { Prazo } from '@prisma/client';
+import { Prazo, Role } from '@prisma/client';
 
 @Injectable()
 export class AcoesService {
@@ -102,19 +103,35 @@ export class AcoesService {
     });
   }
 
-  async update(id: string, updateAcaoDto: UpdateAcaoDto) {
+  async update(
+    id: string,
+    updateAcaoDto: UpdateAcaoDto,
+    solicitante: { id: string; role: Role; setor?: string | null },
+  ) {
     const acao = await this.prisma.acao.findUnique({ where: { id } });
 
     if (!acao) {
       throw new NotFoundException('Ação não encontrada');
     }
 
+    if (solicitante.role === Role.ADMIN_SETOR) {
+      const campos = Object.keys(updateAcaoDto);
+      if (campos.length !== 1 || campos[0] !== 'setor') {
+        throw new ForbiddenException(
+          'Admin do Setor só pode alterar o setor da ação',
+        );
+      }
+    }
+
     return this.prisma.acao.update({
       where: { id },
-      data: {
-        ...updateAcaoDto,
-        dadosIncompletos: updateAcaoDto.dadosIncompletos,
-      },
+      data:
+        solicitante.role === Role.ADMIN_SETOR
+          ? { setor: updateAcaoDto.setor }
+          : {
+              ...updateAcaoDto,
+              dadosIncompletos: updateAcaoDto.dadosIncompletos,
+            },
     });
   }
 

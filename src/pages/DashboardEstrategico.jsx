@@ -7,6 +7,7 @@ import {
     alternarProjetoEstrategico
 } from '../services/analytics';
 import { listarMatrizes, buscarHistoricoMatriz } from '../services/matrizes';
+import { listarAcoes } from '../services/acoes';
 import { acoesEstrategicas } from '../services/acoes_data';
 import { ehAdmin } from '../services/permissoes';
 import { RadarLoader } from '../components/RadarLoader';
@@ -179,12 +180,35 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
     // Dados das APIs
     const [matrizesBanco, setMatrizesBanco] = useState([]);
+    const [acoesDashboard, setAcoesDashboard] = useState(acoesEstrategicas);
     const [dadosResumo, setDadosResumo] = useState(null);
     const [dadosObjetivos, setDadosObjetivos] = useState(null);
     const [dadosPrazosDetalhados, setDadosPrazosDetalhados] = useState(null);
 
     const [carregando, setCarregando] = useState(true);
     const podeEditarEstrategico = ehAdmin(usuarioLogado);
+
+    useEffect(() => {
+        let ativo = true;
+        listarAcoes()
+            .then(dados => {
+                if (!ativo || !Array.isArray(dados) || dados.length === 0) return;
+                setAcoesDashboard(dados.map(acao => ({
+                    ...acao,
+                    prazo: acao.prazo === 'CURTO_PRAZO'
+                        ? 'Curto Prazo'
+                        : acao.prazo === 'MEDIO_PRAZO'
+                            ? 'Médio Prazo'
+                            : acao.prazo === 'LONGO_PRAZO'
+                                ? 'Longo Prazo'
+                                : acao.prazo
+                })));
+            })
+            .catch(() => {
+                if (ativo) setAcoesDashboard(acoesEstrategicas);
+            });
+        return () => { ativo = false; };
+    }, []);
 
     // Carregamento de dados centralizado e resiliente
     const carregarDados = useCallback(async () => {
@@ -246,8 +270,14 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
     // Localiza a Ação Estratégica Selecionada
     const acaoAtual = useMemo(() => {
-        return acoesEstrategicas.find(a => a.id === acaoIdSelecionada) || acoesEstrategicas[0];
-    }, [acaoIdSelecionada]);
+        return acoesDashboard.find(a => a.id === acaoIdSelecionada) || acoesDashboard[0];
+    }, [acoesDashboard, acaoIdSelecionada]);
+
+    useEffect(() => {
+        if (acoesDashboard.length > 0 && !acoesDashboard.some(acao => acao.id === acaoIdSelecionada)) {
+            setAcaoIdSelecionada(acoesDashboard[0].id);
+        }
+    }, [acoesDashboard, acaoIdSelecionada]);
 
     // Localiza os dados da matriz associada à ação atual
     const matrizDaAcaoAtual = useMemo(() => {
@@ -287,7 +317,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
     // Ações filtradas para a caixa de seleção rápida
     const acoesFiltradasParaSelecao = useMemo(() => {
-        return acoesEstrategicas.filter(a => {
+        return acoesDashboard.filter(a => {
             const matchTexto = !buscaAcaoTexto || 
                 a.id.toLowerCase().includes(buscaAcaoTexto.toLowerCase()) || 
                 (a.diretriz && a.diretriz.toLowerCase().includes(buscaAcaoTexto.toLowerCase())) ||
@@ -298,7 +328,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
             return matchTexto && matchEixo && matchSetor;
         });
-    }, [buscaAcaoTexto, filtroEixoAcao, setorFiltro]);
+    }, [acoesDashboard, buscaAcaoTexto, filtroEixoAcao, setorFiltro]);
 
     // Cálculos consolidados para as 5 Visões Estratégicas
     const metricasConsolidadas = useMemo(() => {
@@ -317,16 +347,16 @@ export function DashboardEstrategico({ usuarioLogado }) {
             percentuais['AE 1.1.1.1'] = 75;
         }
 
-        const totalAcoes = acoesEstrategicas.length;
+        const totalAcoes = acoesDashboard.length;
         const acoesComProgresso = Object.values(percentuais);
         const acoesConcluidas = acoesComProgresso.filter(p => p === 100).length;
         const acoesEmAndamento = acoesComProgresso.filter(p => p > 0 && p < 100).length;
-        const somaProgresso = acoesEstrategicas.reduce((acc, a) => acc + (percentuais[a.id] || 0), 0);
+        const somaProgresso = acoesDashboard.reduce((acc, a) => acc + (percentuais[a.id] || 0), 0);
         const progressoGlobal = Math.round(somaProgresso / (totalAcoes || 1));
 
         // 1. Eixos Consolidados
         const eixosConsolidados = Object.values(EIXOS_INFO).map(eixo => {
-            const acoesDoEixo = acoesEstrategicas.filter(a => identificarEixoDoProjeto(a.projetoCodigo).id === eixo.id);
+            const acoesDoEixo = acoesDashboard.filter(a => identificarEixoDoProjeto(a.projetoCodigo).id === eixo.id);
             const soma = acoesDoEixo.reduce((acc, a) => acc + (percentuais[a.id] || 0), 0);
             const progresso = acoesDoEixo.length > 0 ? Math.round(soma / acoesDoEixo.length) : 0;
             return {
@@ -343,7 +373,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
         // 2. Projetos Consolidados (21 projetos)
         const mapaProjetos = {};
-        acoesEstrategicas.forEach(a => {
+        acoesDashboard.forEach(a => {
             const cod = a.projetoCodigo || 'PROJETO GERAL';
             if (!mapaProjetos[cod]) {
                 const num = extrairNumeroProjeto(cod);
@@ -376,7 +406,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
             'Médio Prazo': { rotulo: 'Médio Prazo', cor: '#d97706', acoes: [] },
             'Longo Prazo': { rotulo: 'Longo Prazo', cor: '#7c3aed', acoes: [] }
         };
-        acoesEstrategicas.forEach(a => {
+        acoesDashboard.forEach(a => {
             const p = a.prazo?.includes('Curto') ? 'Curto Prazo' : (a.prazo?.includes('Médio') ? 'Médio Prazo' : 'Longo Prazo');
             mapaPrazos[p].acoes.push(a);
         });
@@ -393,7 +423,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
         // 4. Setores
         const mapaSetores = {};
-        acoesEstrategicas.forEach(a => {
+        acoesDashboard.forEach(a => {
             const setorNom = normalizarSetor(a.setor) || 'Outros';
             if (!mapaSetores[setorNom]) mapaSetores[setorNom] = [];
             mapaSetores[setorNom].push(a);
@@ -428,7 +458,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
             faixasPrazos,
             setores: setoresConsolidados
         };
-    }, [matrizesBanco]);
+    }, [matrizesBanco, acoesDashboard]);
 
     const kpis = dadosResumo?.kpis || metricasConsolidadas.kpis;
     const eixos = dadosResumo?.visao1_eixos || metricasConsolidadas.eixos;

@@ -1,0 +1,292 @@
+.consultar-matrizes-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1240px;
+    min-width: 0;
+    min-height: 60vh;
+    margin: 0 auto;
+    padding: 2rem clamp(1rem, 3vw, 2rem);
+    color: #172b43;
+}
+
+.consultar-matrizes-page.is-empty-drafts {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.consultar-matrizes-page.is-empty-drafts .consultar-matrizes-card {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.consultar-matrizes-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.consultar-matrizes-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.6rem, 2.4vw, 2rem);
+    line-height: 1.2;
+}
+
+.consultar-matrizes-subtitle {
+    max-width: 620px;
+    margin: 0.5rem 0 0;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.consultar-matrizes-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.consultar-matrizes-filter {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.consultar-matrizes-filter label {
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.consultar-matrizes-control {
+    box-sizing: border-box;
+    min-width: 200px;
+    min-height: 44px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.consultar-matrizes-control:focus-visible,
+.consultar-matrizes-table-wrap:focus-visible,
+.consultar-matrizes-action:focus-visible,
+.consultar-matrizes-primary-button:focus-visible,
+.consultar-matrizes-modal-close:focus-visible {
+    outline: 3px solid #ed1c24;
+    outline-offset: 2px;
+}
+
+.consultar-matrizes-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #d7e0e9;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.consultar-matrizes-results {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.consultar-matrizes-table-wrap {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.consultar-matrizes-table-wrap table {
+    min-width: 850px;
+}
+
+.consultar-matrizes-table-wrap th,
+.consultar-matrizes-table-wrap td {
+    padding: 0.75rem;
+}
+
+.consultar-matrizes-table-wrap th {
+    white-space: nowrap;
+}
+
+.consultar-matrizes-table-wrap tbody tr:hover {
+    background: #f8fafc;
+}
+
+.consultar-matrizes-actions-cell {
+    padding: 0.4rem !important;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.consultar-matrizes-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.consultar-matrizes-action {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #b7c8da;
+    border-radius: 6px;
+    background: #fff;
+    color: #0b4383;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.consultar-matrizes-action:hover {
+    background: #edf3f8;
+}
+
+.consultar-matrizes-action-delete {
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.consultar-matrizes-action-delete:hover {
+    background: #fef2f2;
+}
+
+.consultar-matrizes-empty {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem) 1.5rem;
+    text-align: center;
+}
+
+.consultar-matrizes-empty h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.2rem;
+}
+
+.consultar-matrizes-empty p {
+    max-width: 560px;
+    margin: 0 0 0.5rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.consultar-matrizes-primary-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    border: 1px solid #0b4383;
+    border-radius: 6px;
+    background: #0b4383;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.consultar-matrizes-primary-button:hover {
+    background: #083568;
+}
+
+.consultar-matrizes-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.consultar-matrizes-modal {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.consultar-matrizes-modal-title {
+    margin: 0 2.5rem 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-size: 1.3rem;
+    line-height: 1.35;
+}
+
+.consultar-matrizes-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #334155;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.consultar-matrizes-modal-close:hover {
+    background: #f1f5f9;
+}
+
+.consultar-matrizes-modal-dismiss {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+@media (max-width: 800px) {
+    .consultar-matrizes-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .consultar-matrizes-filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    }
+
+    .consultar-matrizes-control {
+        width: 100%;
+    }
+}
+
+@media (max-width: 540px) {
+    .consultar-matrizes-page {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .consultar-matrizes-modal {
+        padding: 1.25rem;
+    }
+
+    .consultar-matrizes-actions {
+        justify-content: flex-start;
+    }
+}

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PencilSimple } from '@phosphor-icons/react';
 import { ChecklistEtapas } from '../components/ChecklistEtapas';
-import { calcularPercentualEtapas } from '../services/progresso';
+import { calcularPercentualEtapas, migrarMetadadosEtapaParaTarefas } from '../services/progresso';
 import { 
     buscarMatriz, 
     criarMatriz, 
@@ -52,7 +52,7 @@ export function FormularioMatriz({
             setAcoesComEtapas(acoesData.map(a => ({
                 acaoId: a.acaoId || a.id,
                 acao: a.acao || a,
-                etapas: a.etapas || []
+                etapas: migrarMetadadosEtapaParaTarefas(a.etapas || [])
             })));
         }
     };
@@ -87,7 +87,7 @@ export function FormularioMatriz({
             setAcoesComEtapas(acoesSelecionadas.map(a => ({ 
                 acaoId: a.id, 
                 acao: a,
-                etapas: a.etapas || [] 
+                etapas: migrarMetadadosEtapaParaTarefas(a.etapas || [])
             })));
         }
     }, [modo, matrizId, matrizExistente, acoesSelecionadas]);
@@ -275,7 +275,9 @@ export function FormularioMatriz({
                     <p className="formulario-eyebrow">Radar 2030</p>
                     <h1 className="formulario-title">{titulo}</h1>
                     <p className="formulario-subtitle">
-                        {isEdit ? 'Atualize o nome da matriz, adicione etapas e detalhe as tarefas de execução.' : 'Cadastre o nome da matriz, adicione as etapas (passos) e tarefas detalhadas.'}
+                        {isEdit
+                            ? 'Organize a execução da ação em etapas e tarefas detalhadas.'
+                            : 'Identifique a matriz e organize a ação em etapas e tarefas detalhadas.'}
                     </p>
                 </div>
                 <button type="button" onClick={onVoltar} className="formulario-button-tertiary">
@@ -313,38 +315,12 @@ export function FormularioMatriz({
 
             <form onSubmit={enviarParaComite} className="formulario-form">
                 
-                {/* 01: NOME DA MATRIZ */}
-                <section className="formulario-section">
-                    <div className="section-header">
-                        <div>
-                            <span className="section-number">01</span>
-                            <h2 className="section-title">Nome da Matriz</h2>
-                        </div>
-                        <p className="section-description">Título descritivo que identifica a matriz e o conjunto de entregas.</p>
-                    </div>
-                    <div>
-                        <label className="formulario-label" htmlFor="nome">
-                            Nome da Matriz / Ação <span className="required">*</span>
-                        </label>
-                        <input 
-                            id="nome" 
-                            type="text" 
-                            value={nome} 
-                            onChange={(e) => setNome(e.target.value)} 
-                            required 
-                            className="formulario-input" 
-                            placeholder="Ex: Regulamentação do SET / PETRANS 2030"
-                            disabled={!podeEditar}
-                        />
-                    </div>
-                </section>
-
-                {/* 02: ETAPAS E TAREFAS */}
+                {/* IDENTIFICAÇÃO E PLANO DE EXECUÇÃO */}
                 <section className="formulario-section">
                     <div className="section-header etapas-section-header">
                         <div>
-                            <span className="section-number">02</span>
-                            <h2 className="section-title">Etapas e Tarefas de Execução</h2>
+                            <span className="section-number">01</span>
+                            <h2 className="section-title">Identificação e plano de execução</h2>
                         </div>
                         {isEdit && !isEdicaoAprovadaAdmin && (
                             <button
@@ -360,12 +336,34 @@ export function FormularioMatriz({
                         )}
                         <p className="section-description">
                             {podeEditarTitulosEtapas
-                                ? 'Adicione os passos da ação. Em cada tarefa, clique em "Explicar / Detalhar" para preencher os parâmetros operacionais.'
+                                ? 'Identifique a matriz e organize a ação em etapas, tarefas e detalhes 5W2H.'
                                 : statusAtual === 'APROVADO'
                                 ? 'Marque as tarefas concluídas. O avanço percentual da ação e do PETRANS é atualizado em tempo real.'
                                 : 'Relação de etapas e tarefas submetidas para análise e deliberação do Comitê Gestor.'}
                         </p>
                     </div>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label className="formulario-label" htmlFor="nome">
+                            Nome para identificar a matriz <span className="required">*</span>
+                        </label>
+                        <input
+                            id="nome"
+                            type="text"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            required
+                            className="formulario-input"
+                            placeholder="Ex.: Regulamentação do SET / PETRANS 2030"
+                            disabled={!podeEditar}
+                        />
+                    </div>
+                    {podeEditarTitulosEtapas && (
+                        <div className="etapas-fluxo" aria-label="Como organizar o plano de execução">
+                            <div><strong>1. Etapa</strong><span>Um passo do trabalho</span></div>
+                            <div><strong>2. Tarefa</strong><span>Uma entrega a realizar</span></div>
+                            <div><strong>3. Detalhes 5W2H</strong><span>O quê, por quê, quem, onde, quando, como e quanto</span></div>
+                        </div>
+                    )}
                     <div style={{ display: 'grid', gap: '1rem' }}>
                         {acoesComEtapas.map(acao => (
                             <ChecklistEtapas
@@ -421,7 +419,7 @@ export function FormularioMatriz({
                             onClick={salvarRascunho}
                             className="formulario-button-primary"
                             disabled={loading}
-                            style={{ background: '#16a34a' }}
+                            style={{ background: '#0b4383' }}
                         >
                             {loading ? 'Salvando...' : 'Salvar alterações'}
                         </button>

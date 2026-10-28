@@ -96,7 +96,7 @@ export function RecuperarSenha({ onVoltar }) {
                         <button type="button" onClick={onVoltar} style={{ flex: 1, background: '#e2e8f0', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', color: '#475569' }}>
                             Voltar
                         </button>
-                        <button type="submit" disabled={carregando} style={{ flex: 1, background: '#2563eb', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
+                        <button type="submit" disabled={carregando} style={{ flex: 1, background: '#0b4383', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
                             {carregando ? 'Enviando...' : 'Enviar'}
                         </button>
                     </div>
@@ -119,7 +119,7 @@ export function RecuperarSenha({ onVoltar }) {
                         <button type="button" onClick={() => setEtapa('email')} style={{ flex: 1, background: '#e2e8f0', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', color: '#475569' }}>
                             Voltar
                         </button>
-                        <button type="submit" disabled={carregando} style={{ flex: 1, background: '#2563eb', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
+                        <button type="submit" disabled={carregando} style={{ flex: 1, background: '#0b4383', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
                             {carregando ? 'Salvando...' : 'Redefinir'}
                         </button>
                     </div>

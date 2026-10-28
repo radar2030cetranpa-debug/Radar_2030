@@ -1,0 +1,282 @@
+.painel-admin-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.painel-admin-save-guidance {
+    margin: -0.35rem 0 1rem;
+    color: #475569;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.painel-admin-users-table th {
+    white-space: nowrap;
+}
+
+.painel-admin-user-action:focus-visible,
+.painel-admin-users-table select:focus-visible,
+.painel-admin-action-button:focus-visible,
+.painel-admin-action-close:focus-visible {
+    outline: 3px solid #0b4383;
+    outline-offset: 2px;
+}
+
+.painel-admin-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.painel-admin-action-button,
+.painel-admin-action-close {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #b7c8da;
+    border-radius: 6px;
+    background: #fff;
+    color: #0b4383;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.painel-admin-action-button:hover,
+.painel-admin-action-close:hover {
+    background: #edf3f8;
+}
+
+.painel-admin-action-button-delete {
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.painel-admin-action-button-delete:hover {
+    background: #fef2f2;
+}
+
+.painel-admin-action-details {
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.painel-admin-action-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.painel-admin-action-details-header h4 {
+    margin: 0;
+    color: #1e293b;
+}
+
+.painel-admin-action-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.painel-admin-action-detail {
+    min-width: 0;
+    padding: 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.painel-admin-action-detail dt {
+    margin-bottom: 0.25rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.painel-admin-action-detail dd {
+    margin: 0;
+    color: #1e293b;
+    line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+    .painel-admin-users-table-wrapper {
+        overflow: visible !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .painel-admin-users-table,
+    .painel-admin-users-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .painel-admin-users-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .painel-admin-users-table tbody {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .painel-admin-users-table tbody tr {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .painel-admin-users-table tbody td {
+        display: flex;
+        flex-direction: column;
+        min-width: 0 !important;
+        gap: 0.35rem;
+        padding: 0.65rem 0 !important;
+        border-bottom: 1px solid #f1f5f9;
+        overflow-wrap: anywhere;
+        text-align: left !important;
+    }
+
+    .painel-admin-users-table tbody td::before {
+        content: attr(data-label);
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .painel-admin-users-table tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .painel-admin-users-table tbody td select {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.9rem !important;
+    }
+
+    .painel-admin-users-table .painel-admin-user-actions {
+        align-items: stretch;
+        gap: 0.5rem !important;
+    }
+
+    .painel-admin-user-actions .painel-admin-user-action {
+        display: inline-flex;
+        flex: 1 1 0;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.55rem 0.75rem !important;
+        font-size: 0.9rem !important;
+        white-space: normal;
+    }
+
+    .painel-admin-actions-table-wrapper {
+        overflow: visible !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .painel-admin-actions-table,
+    .painel-admin-actions-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .painel-admin-actions-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .painel-admin-actions-table tbody {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .painel-admin-actions-table tbody tr {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .painel-admin-actions-table tbody td {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 0.35rem;
+        padding: 0.65rem 0 !important;
+        border-bottom: 1px solid #f1f5f9;
+        overflow-wrap: anywhere;
+        text-align: left !important;
+        white-space: normal !important;
+    }
+
+    .painel-admin-actions-table tbody td::before {
+        content: attr(data-label);
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .painel-admin-actions-table tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .painel-admin-action-buttons {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .painel-admin-action-details-header {
+        align-items: flex-start;
+    }
+}

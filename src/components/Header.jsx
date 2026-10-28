@@ -1,6 +1,6 @@
 // src/components/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { CaretDown, Check, Eye, EyeSlash, Key, LockKey, SignOut, Users } from '@phosphor-icons/react';
+import { CaretDown, Check, Eye, EyeSlash, Key, List, LockKey, SignOut, Users, X } from '@phosphor-icons/react';
 import logoImg from '../assets/favicon-radar-2030.png';
 import Swal from 'sweetalert2';
 import { login as apiLogin, logout as apiLogout } from '../services/auth';
@@ -8,7 +8,7 @@ import { ApiError } from '../services/api';
 import { ehComiteOuAdminGeral, ehAdmin, labelRole } from '../services/permissoes';
 import { useLoading } from '../context/LoadingContext';
 
-export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUsuarioLogado }) {
+export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUsuarioLogado, loginTriggerRef }) {
     const [modalLoginAberto, setModalLoginAberto] = useState(false);
     const [menuAberto, setMenuAberto] = useState(false);
     const [dropdownUsuarioAberto, setDropdownUsuarioAberto] = useState(false);
@@ -16,7 +16,17 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
     const [senha, setSenha] = useState('');
     const [mostrarSenha, setMostrarSenha] = useState(false);
     const dropdownRef = useRef(null);
+    const menuLateralRef = useRef(null);
+    const botaoMenuMovelRef = useRef(null);
     const { mostrarLoading, esconderLoading } = useLoading();
+
+    useEffect(() => {
+        if (!loginTriggerRef) return undefined;
+        loginTriggerRef.current = () => setModalLoginAberto(true);
+        return () => {
+            loginTriggerRef.current = null;
+        };
+    }, [loginTriggerRef]);
 
     const {
         HOME = 'home',
@@ -27,7 +37,8 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
         COMITE = 'comite',
         ADMIN = 'admin',
         TROCAR_SENHA = 'trocar-senha',
-        RECUPERAR_SENHA = 'recuperar-senha'
+        RECUPERAR_SENHA = 'recuperar-senha',
+        SUPORTE = 'suporte'
     } = telas;
 
     // Fecha o dropdown ao clicar fora
@@ -40,6 +51,45 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
         document.addEventListener('mousedown', handleClickFora);
         return () => document.removeEventListener('mousedown', handleClickFora);
     }, []);
+
+    useEffect(() => {
+        if (!menuAberto) return undefined;
+
+        const overflowAnterior = document.body.style.overflow;
+        const botaoMenuMovel = botaoMenuMovelRef.current;
+        document.body.style.overflow = 'hidden';
+        menuLateralRef.current?.querySelector('button')?.focus();
+
+        const handleMenuKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setMenuAberto(false);
+                return;
+            }
+
+            if (event.key !== 'Tab' || !menuLateralRef.current) return;
+
+            const itensFocaveis = [...menuLateralRef.current.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+            const primeiro = itensFocaveis[0];
+            const ultimo = itensFocaveis[itensFocaveis.length - 1];
+
+            if (event.shiftKey && document.activeElement === primeiro) {
+                event.preventDefault();
+                ultimo?.focus();
+            } else if (!event.shiftKey && document.activeElement === ultimo) {
+                event.preventDefault();
+                primeiro?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleMenuKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleMenuKeyDown);
+            document.body.style.overflow = overflowAnterior;
+            botaoMenuMovel?.focus();
+        };
+    }, [menuAberto]);
 
     const handleNavigate = (tela) => {
         if (typeof onNavigate === 'function') {
@@ -75,7 +125,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                 icon: 'error',
                 title: 'Erro no login',
                 text: mensagem,
-                confirmButtonColor: '#2563eb'
+                confirmButtonColor: '#0b4383'
             });
         } finally {
             esconderLoading();
@@ -88,8 +138,8 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
             text: 'Você tem certeza que deseja fazer logout?',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#e63946',
-            cancelButtonColor: '#6c757d',
+            confirmButtonColor: '#ed1c24',
+            cancelButtonColor: '#0b4383',
             confirmButtonText: 'Sim, sair',
             cancelButtonText: 'Cancelar'
         });
@@ -119,7 +169,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
 
     return (
         <header className="header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 2rem', background: '#ffffff', borderBottom: '1px solid #e2e8f0', minHeight: '76px' }}>
-            <div className="header-brand" onClick={() => handleNavigate(HOME)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button type="button" className="header-brand" onClick={() => handleNavigate(HOME)} aria-label="Ir para o início" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', border: 'none', background: 'transparent', padding: 0 }}>
                 <img
                     src={logoImg}
                     alt="Logo Radar 2030"
@@ -131,7 +181,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                         display: 'block'
                     }}
                 />
-            </div>
+            </button>
 
             {/* Menu Desktop */}
             <nav className="header-nav" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -144,7 +194,9 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                         <button className="button" onClick={() => handleNavigate(RASCUNHOS)} style={estiloBotaoNav(telaAtual === RASCUNHOS)}>Meus Rascunhos</button>
                     </>
                 )}
+            </nav>
 
+            <div className="header-account">
                 {estaLogado ? (
                     <div ref={dropdownRef} style={{ position: 'relative', marginLeft: '0.5rem' }}>
                         {/* Botão do Avatar */}
@@ -152,6 +204,8 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                             type="button"
                             onClick={() => setDropdownUsuarioAberto(!dropdownUsuarioAberto)}
                             aria-label="Menu do usuário"
+                            aria-expanded={dropdownUsuarioAberto}
+                            aria-controls={dropdownUsuarioAberto ? 'header-user-dropdown' : undefined}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -170,7 +224,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     width: '32px',
                                     height: '32px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                                    background: 'linear-gradient(135deg, #0b4383, #ed1c24)',
                                     color: '#fff',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -198,6 +252,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                         {/* Dropdown */}
                         {dropdownUsuarioAberto && (
                             <div
+                                id="header-user-dropdown"
                                 style={{
                                     position: 'absolute',
                                     top: 'calc(100% + 8px)',
@@ -226,7 +281,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                                 width: '38px',
                                                 height: '38px',
                                                 borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                                                background: 'linear-gradient(135deg, #0b4383, #ed1c24)',
                                                 color: '#fff',
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -267,9 +322,9 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                         aria-current={telaAtual === COMITE ? 'page' : undefined}
                                         style={estiloItemDropdown(telaAtual === COMITE)}
                                     >
-                                        <Users size={16} weight="bold" style={{ color: '#d97706' }} aria-hidden="true" />
+                                        <Users size={16} weight="bold" style={{ color: '#0b4383' }} aria-hidden="true" />
                                         <span>Painel Gestor</span>
-                                        {telaAtual === COMITE && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#d97706' }} aria-hidden="true" />}
+                                        {telaAtual === COMITE && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#0b4383' }} aria-hidden="true" />}
                                     </button>
                                 )}
 
@@ -281,9 +336,9 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                         aria-current={telaAtual === ADMIN ? 'page' : undefined}
                                         style={estiloItemDropdown(telaAtual === ADMIN)}
                                     >
-                                        <LockKey size={16} weight="bold" style={{ color: '#7c3aed' }} aria-hidden="true" />
+                                        <LockKey size={16} weight="bold" style={{ color: '#ed1c24' }} aria-hidden="true" />
                                         <span>Administração</span>
-                                        {telaAtual === ADMIN && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#7c3aed' }} aria-hidden="true" />}
+                                        {telaAtual === ADMIN && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#ed1c24' }} aria-hidden="true" />}
                                     </button>
                                 )}
 
@@ -294,40 +349,11 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                     aria-current={telaAtual === TROCAR_SENHA ? 'page' : undefined}
                                     style={estiloItemDropdown(telaAtual === TROCAR_SENHA)}
                                 >
-                                    <Key size={16} weight="bold" style={{ color: '#2563eb' }} aria-hidden="true" />
+                                    <Key size={16} weight="bold" style={{ color: '#0b4383' }} aria-hidden="true" />
                                     <span>Trocar Senha</span>
-                                    {telaAtual === TROCAR_SENHA && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#2563eb' }} aria-hidden="true" />}
+                                    {telaAtual === TROCAR_SENHA && <Check size={16} weight="bold" style={{ marginLeft: 'auto', color: '#0b4383' }} aria-hidden="true" />}
                                 </button>
 
-                                {/* Separador */}
-                                <div style={{ height: '1px', background: '#f1f5f9', margin: '0.35rem 0' }} />
-
-                                {/* Botão Sair */}
-                                <button
-                                    type="button"
-                                    onClick={handleLogoutClick}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.6rem',
-                                        width: '100%',
-                                        padding: '0.6rem 0.75rem',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        color: '#e63946',
-                                        fontSize: '0.88rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        transition: 'background 0.15s ease'
-                                    }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                                >
-                                    <SignOut size={16} weight="bold" aria-hidden="true" />
-                                    <span>Sair</span>
-                                </button>
                             </div>
                         )}
                     </div>
@@ -335,17 +361,101 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                     <button
                         className="button"
                         onClick={() => setModalLoginAberto(true)}
-                        style={{ background: '#2563eb', color: '#fff', padding: '0.5rem 1.25rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+                        style={{ background: '#0b4383', color: '#fff', minHeight: '44px', padding: '0.7rem 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600' }}
                     >
                         Entrar
                     </button>
                 )}
-            </nav>
+            </div>
 
             {/* Botão Mobile Toggle */}
-            <button className="header-mobile-toggle" onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" type="button" style={{ display: 'none', background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>
-                ☰
+            <button
+                ref={botaoMenuMovelRef}
+                className="header-mobile-toggle"
+                onClick={() => setMenuAberto(!menuAberto)}
+                aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
+                aria-expanded={menuAberto}
+                aria-controls="header-mobile-drawer"
+                type="button"
+            >
+                {menuAberto ? <X size={24} weight="bold" aria-hidden="true" /> : <List size={24} weight="bold" aria-hidden="true" />}
             </button>
+
+            {menuAberto && (
+                <div className="header-mobile-drawer-layer">
+                    <button
+                        type="button"
+                        className="header-mobile-backdrop"
+                        onClick={() => setMenuAberto(false)}
+                        aria-label="Fechar menu"
+                        tabIndex={-1}
+                    />
+                    <aside
+                        id="header-mobile-drawer"
+                        ref={menuLateralRef}
+                        className="header-mobile-drawer"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="header-mobile-title"
+                    >
+                        <div className="header-mobile-drawer-header">
+                            <div className="header-mobile-drawer-brand">
+                                <img src={logoImg} alt="" />
+                                <span id="header-mobile-title">Menu</span>
+                            </div>
+                            <button
+                                type="button"
+                                className="header-mobile-close"
+                                onClick={() => setMenuAberto(false)}
+                                aria-label="Fechar menu"
+                            >
+                                <X size={22} weight="bold" aria-hidden="true" />
+                            </button>
+                        </div>
+
+                        {estaLogado && (
+                            <div className="header-mobile-user">
+                                <span className="header-mobile-avatar" aria-hidden="true">{iniciaisUsuario}</span>
+                                <span className="header-mobile-user-details">
+                                    <strong>{usuarioLogado.email}</strong>
+                                    <small>
+                                        {labelRole(usuarioLogado.role)}
+                                        {usuarioLogado.setor ? ` • ${usuarioLogado.setor}` : ''}
+                                    </small>
+                                </span>
+                            </div>
+                        )}
+
+                        <nav className="header-mobile-navigation" aria-label="Navegação principal">
+                            {estaLogado ? (
+                                <>
+                                    <button type="button" onClick={() => handleNavigate(HOME)} aria-current={telaAtual === HOME ? 'page' : undefined}>Início</button>
+                                    <button type="button" onClick={() => handleNavigate(DASHBOARD)} aria-current={telaAtual === DASHBOARD ? 'page' : undefined}>Dashboard</button>
+                                    <button type="button" onClick={() => handleNavigate(ACOES)} aria-current={telaAtual === ACOES ? 'page' : undefined}>Ações Estratégicas</button>
+                                    <button type="button" onClick={() => handleNavigate(CONSULTAR)} aria-current={telaAtual === CONSULTAR ? 'page' : undefined}>Minhas Matrizes</button>
+                                    <button type="button" onClick={() => handleNavigate(RASCUNHOS)} aria-current={telaAtual === RASCUNHOS ? 'page' : undefined}>Meus Rascunhos</button>
+                                    <button type="button" onClick={() => handleNavigate(SUPORTE)} aria-current={telaAtual === SUPORTE ? 'page' : undefined}>Suporte técnico</button>
+                                    <button type="button" className="header-mobile-logout" onClick={handleLogoutClick}>
+                                        <SignOut size={18} weight="bold" aria-hidden="true" />
+                                        <span>Sair</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="header-mobile-login"
+                                    onClick={() => {
+                                        setMenuAberto(false);
+                                        setModalLoginAberto(true);
+                                    }}
+                                >
+                                    Entrar
+                                </button>
+                            )}
+                        </nav>
+                    </aside>
+                </div>
+            )}
 
             {/* Modal de Login */}
             {modalLoginAberto && (
@@ -413,7 +523,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
                                 </button>
                             </div>
 
-                            <button type="submit" className="button" style={{ width: '100%', background: '#2563eb', color: '#fff', padding: '0.75rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}>Entrar</button>
+                            <button type="submit" className="button" style={{ width: '100%', background: '#0b4383', color: '#fff', padding: '0.75rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}>Entrar</button>
                         </form>
                     </div>
                 </div>
@@ -423,7 +533,7 @@ export function Header({ telas = {}, telaAtual, onNavigate, usuarioLogado, setUs
 }
 
 const estiloBotaoNav = (ativo) => ({
-    background: ativo ? '#2563eb' : 'transparent',
+    background: ativo ? '#0b4383' : 'transparent',
     border: 'none',
     color: ativo ? '#fff' : '#475569',
     cursor: 'pointer',
@@ -431,7 +541,7 @@ const estiloBotaoNav = (ativo) => ({
     padding: '0.45rem 0.85rem',
     borderRadius: '6px',
     transition: 'all 0.2s ease',
-    boxShadow: ativo ? '0 2px 10px rgba(37, 99, 235, 0.18)' : 'none',
+    boxShadow: ativo ? '0 2px 10px rgba(11, 67, 131, 0.18)' : 'none',
     textAlign: 'center',
     width: 'auto',
     fontSize: '0.9rem'
@@ -443,11 +553,11 @@ const estiloItemDropdown = (ativo) => ({
     gap: '0.6rem',
     width: '100%',
     padding: '0.6rem 0.75rem',
-    background: ativo ? '#f1f5f9' : 'transparent',
+    background: ativo ? '#eff6ff' : 'transparent',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
-    color: '#334155',
+    color: ativo ? '#0b4383' : '#334155',
     fontSize: '0.88rem',
     fontWeight: ativo ? 600 : 500,
     textAlign: 'left',

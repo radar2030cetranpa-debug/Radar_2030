@@ -141,7 +141,7 @@ export function SuporteTecnico({ onVoltar }) {
 const estiloCard = {
     background: '#fff',
     border: '1px solid #e2e8f0',
-    borderRadius: '12px',
+    borderRadius: '8px',
     padding: '1.35rem',
     boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)'
 };
@@ -151,5 +151,5 @@ const estiloTituloCard = { margin: '0.75rem 0 0.4rem', color: '#0f172a', fontSiz
 const estiloTexto = { margin: 0, color: '#64748b', fontSize: '0.9rem', lineHeight: 1.65 };
 const estiloLabel = { display: 'block', marginBottom: '0.45rem', color: '#475569', fontSize: '0.88rem', fontWeight: 600 };
 const estiloInput = { width: '100%', padding: '0.75rem 0.85rem', marginBottom: '1rem', border: '1px solid #cbd5e1', borderRadius: '8px', color: '#0f172a', background: '#fff', fontSize: '0.92rem' };
-const estiloBotaoPrimario = { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: 'none', borderRadius: '8px', padding: '0.75rem 1rem', background: '#2563eb', color: '#fff', fontWeight: 700, cursor: 'pointer' };
+const estiloBotaoPrimario = { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: 'none', borderRadius: '8px', padding: '0.75rem 1rem', background: '#0b4383', color: '#fff', fontWeight: 700, cursor: 'pointer' };
 const estiloBotaoSecundario = { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.7rem 1rem', background: '#fff', color: '#475569', fontWeight: 700, cursor: 'pointer' };

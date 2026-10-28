@@ -1,10 +1,11 @@
 // src/pages/ConsultarMatrizes.jsx
 import { contarTarefas, calcularPercentualEtapas, calcularPercentualEtapa } from '../services/progresso';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Eye, PencilSimple, Trash } from '@phosphor-icons/react';
 import { listarMatrizes, removerMatriz } from '../services/matrizes';
 import Swal from 'sweetalert2';
 import { RadarLoader } from '../components/RadarLoader';
+import '../styles/consultarMatrizes.css';
 
 export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, onEditar }) {
     const [registros, setRegistros] = useState([]);
@@ -12,6 +13,8 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
     const [filtroStatus, setFiltroStatus] = useState('TODOS');
     const [termoBusca, setTermoBusca] = useState('');
     const [matrizSelecionada, setMatrizSelecionada] = useState(null);
+    const modalRef = useRef(null);
+    const elementoAntesDoModalRef = useRef(null);
 
     const carregarDados = useCallback(async () => {
         setCarregando(true);
@@ -45,6 +48,46 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
         carregarDados();
     }, [carregarDados]);
 
+    useEffect(() => {
+        if (!matrizSelecionada) return undefined;
+
+        elementoAntesDoModalRef.current = document.activeElement;
+        const modal = modalRef.current;
+        const primeiroBotao = modal?.querySelector('button');
+        primeiroBotao?.focus();
+
+        const handleModalKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setMatrizSelecionada(null);
+                return;
+            }
+
+            if (event.key !== 'Tab' || !modal) return;
+
+            const elementosFocaveis = [...modal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+            const primeiro = elementosFocaveis[0];
+            const ultimo = elementosFocaveis[elementosFocaveis.length - 1];
+
+            if (event.shiftKey && document.activeElement === primeiro) {
+                event.preventDefault();
+                ultimo?.focus();
+            } else if (!event.shiftKey && document.activeElement === ultimo) {
+                event.preventDefault();
+                primeiro?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleModalKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleModalKeyDown);
+            if (elementoAntesDoModalRef.current instanceof HTMLElement) {
+                elementoAntesDoModalRef.current.focus();
+            }
+        };
+    }, [matrizSelecionada]);
+
     const registrosFiltrados = registros.filter(reg => {
         const autorEmail = reg.criadoPor?.email || (typeof reg.criadoPor === 'string' ? reg.criadoPor : '');
         const buscaLower = termoBusca.toLowerCase();
@@ -58,6 +101,14 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
 
         return matchTermo;
     });
+    const existemFiltrosAtivos = Boolean(termoBusca.trim()) || (modo !== 'rascunhos' && filtroStatus !== 'TODOS');
+    const mostrarBusca = modo !== 'rascunhos' || registros.length > 0;
+    const mostrarContagem = modo !== 'rascunhos' || registros.length > 0;
+
+    const limparFiltros = () => {
+        setTermoBusca('');
+        setFiltroStatus('TODOS');
+    };
 
     const handleExcluir = async (id) => {
         const result = await Swal.fire({
@@ -122,42 +173,57 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
     };
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className={`consultar-matrizes-page${modo === 'rascunhos' && !carregando && registros.length === 0 ? ' is-empty-drafts' : ''}`}>
+            <header className="consultar-matrizes-header">
                 <div>
-                    <h2 style={{ color: '#1e293b', margin: 0 }}>{modo === 'rascunhos' ? 'Meus Rascunhos' : 'Minhas Matrizes'}</h2>
-                    <p style={{ color: '#64748b', fontSize: '0.95rem', marginTop: '0.4rem' }}>
+                    <h1 className="consultar-matrizes-title">{modo === 'rascunhos' ? 'Meus Rascunhos' : 'Minhas Matrizes'}</h1>
+                    <p className="consultar-matrizes-subtitle">
                         {modo === 'rascunhos'
-                            ? 'Continue trabalhando nas matrizes que ainda não foram enviadas para o comitê.'
+                            ? 'Acompanhe e retome matrizes que ainda não foram enviadas para o comitê.'
                             : 'Consulte todas as matrizes sincronizadas com o servidor, filtrando por status ou termo.'}
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Buscar por ID, nome ou autor..." 
-                        value={termoBusca}
-                        onChange={(e) => setTermoBusca(e.target.value)}
-                        style={{ padding: '0.5rem 1rem', minWidth: '200px', width: '100%', maxWidth: '300px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.9rem' }}
-                    />
-                    {modo !== 'rascunhos' && (
-                        <select 
-                            value={filtroStatus} 
-                            onChange={(e) => setFiltroStatus(e.target.value)}
-                            style={{ padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff', fontSize: '0.9rem' }}
-                        >
-                            <option value="TODOS">Todos os Status</option>
-                            <option value="RASCUNHO">Rascunho</option>
-                            <option value="ENVIADO">Enviado</option>
-                            <option value="APROVADO">Aprovado</option>
-                            <option value="PENDENTE">Pendente / Correção</option>
-                        </select>
-                    )}
-                </div>
-            </div>
+                {mostrarBusca && (
+                    <div className="consultar-matrizes-filters">
+                        <div className="consultar-matrizes-filter">
+                            <label htmlFor="buscar-matriz">Buscar matrizes</label>
+                            <input
+                                id="buscar-matriz"
+                                type="search"
+                                placeholder="ID, nome ou autor"
+                                value={termoBusca}
+                                onChange={(e) => setTermoBusca(e.target.value)}
+                                className="consultar-matrizes-control"
+                            />
+                        </div>
+                        {modo !== 'rascunhos' && (
+                            <div className="consultar-matrizes-filter">
+                                <label htmlFor="filtro-status-matriz">Filtrar por status</label>
+                                <select
+                                    id="filtro-status-matriz"
+                                    value={filtroStatus}
+                                    onChange={(e) => setFiltroStatus(e.target.value)}
+                                    className="consultar-matrizes-control"
+                                >
+                                    <option value="TODOS">Todos os status</option>
+                                    <option value="RASCUNHO">Rascunho</option>
+                                    <option value="ENVIADO">Enviado</option>
+                                    <option value="APROVADO">Aprovado</option>
+                                    <option value="PENDENTE">Pendente / Correção</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </header>
 
-            <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <section className="consultar-matrizes-card" aria-label="Lista de matrizes">
+                {!carregando && mostrarContagem && (
+                    <div className="consultar-matrizes-results" role="status" aria-live="polite">
+                        {registrosFiltrados.length} {registrosFiltrados.length === 1 ? 'matriz encontrada' : 'matrizes encontradas'}
+                    </div>
+                )}
                 {carregando ? (
                     <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
                         <RadarLoader
@@ -167,7 +233,7 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                         />
                     </div>
                 ) : registrosFiltrados.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="consultar-matrizes-table-wrap" role="region" aria-label="Tabela de matrizes" tabIndex={0}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
@@ -191,35 +257,40 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                                             <td style={{ padding: '12px', fontWeight: '500' }}>{reg.quanto || '-'}</td>
                                             <td style={{ padding: '12px' }}>{reg.percentual || 0}%</td>
                                             <td style={{ padding: '12px' }}><span style={estiloBadgeStatus(reg.status)}>{reg.status}</span></td>
-                                            <td style={{ padding: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                                <button
-                                                    onClick={() => setMatrizSelecionada(reg)}
-                                                    title="Ver matriz"
-                                                    aria-label="Ver matriz"
-                                                    style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', marginRight: '8px', fontWeight: 'bold', fontSize: '1.1rem' }}
-                                                >
-                                                    <Eye size={18} weight="bold" aria-hidden="true" />
-                                                </button>
-                                                {podeEditar(reg) && (
+                                            <td className="consultar-matrizes-actions-cell">
+                                                <div className="consultar-matrizes-actions">
                                                     <button
-                                                        onClick={() => onEditar && onEditar(reg)}
-                                                        title={reg.status === 'APROVADO' ? 'Editar matriz aprovada' : 'Editar matriz'}
-                                                        aria-label={reg.status === 'APROVADO' ? 'Editar matriz aprovada' : 'Editar matriz'}
-                                                        style={{ background: 'transparent', border: 'none', color: '#558BC9', cursor: 'pointer', marginRight: '8px', fontWeight: 'bold', fontSize: '1.1rem' }}
+                                                        type="button"
+                                                        onClick={() => setMatrizSelecionada(reg)}
+                                                        title="Ver matriz"
+                                                        className="consultar-matrizes-action consultar-matrizes-action-view"
                                                     >
-                                                        <PencilSimple size={18} weight="bold" aria-hidden="true" />
+                                                        <Eye size={18} weight="bold" aria-hidden="true" />
+                                                        <span>Ver</span>
                                                     </button>
-                                                )}
-                                                {podeExcluir(reg) && (
-                                                    <button
-                                                        onClick={() => handleExcluir(reg.id)}
-                                                        title="Excluir matriz"
-                                                        aria-label="Excluir matriz"
-                                                        style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}
-                                                    >
-                                                        <Trash size={18} weight="bold" aria-hidden="true" />
-                                                    </button>
-                                                )}
+                                                    {podeEditar(reg) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onEditar && onEditar(reg)}
+                                                            title={reg.status === 'APROVADO' ? 'Editar matriz aprovada' : 'Editar matriz'}
+                                                            className="consultar-matrizes-action consultar-matrizes-action-edit"
+                                                        >
+                                                            <PencilSimple size={18} weight="bold" aria-hidden="true" />
+                                                            <span>Editar</span>
+                                                        </button>
+                                                    )}
+                                                    {podeExcluir(reg) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleExcluir(reg.id)}
+                                                            title="Excluir matriz"
+                                                            className="consultar-matrizes-action consultar-matrizes-action-delete"
+                                                        >
+                                                            <Trash size={18} weight="bold" aria-hidden="true" />
+                                                            <span>Excluir</span>
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -228,29 +299,53 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                         </table>
                     </div>
                 ) : (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
-                        <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>
-                            {modo === 'rascunhos' ? 'Você não possui nenhum rascunho salvo.' : 'Nenhuma matriz encontrada.'}
-                        </h3>
-                        <p style={{ marginBottom: '1.5rem' }}>
-                            {modo === 'rascunhos'
-                                ? 'Salve um rascunho no formulário para continuar a trabalhar nele depois.'
-                                : 'Crie uma nova matriz a partir das ações estratégicas para começar.'}
+                    <div className="consultar-matrizes-empty">
+                        <h2>
+                            {existemFiltrosAtivos
+                                ? 'Nenhuma matriz corresponde aos filtros.'
+                                : modo === 'rascunhos' ? 'Você ainda não tem rascunhos salvos.' : 'Você ainda não tem matrizes.'}
+                        </h2>
+                        <p>
+                            {existemFiltrosAtivos
+                                ? 'Tente outro termo de busca ou selecione um status diferente.'
+                                : modo === 'rascunhos'
+                                    ? 'Quando salvar uma matriz como rascunho, ela aparecerá aqui para você continuar.'
+                                    : 'Comece escolhendo uma ação estratégica para criar sua primeira matriz.'}
                         </p>
-                        <button onClick={() => onNavigate('acoes')} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.75rem 1.2rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                            Criar nova matriz
-                        </button>
+                        {existemFiltrosAtivos ? (
+                            <button type="button" className="consultar-matrizes-primary-button" onClick={limparFiltros}>
+                                Limpar filtros
+                            </button>
+                        ) : (
+                            <button type="button" className="consultar-matrizes-primary-button" onClick={() => onNavigate('acoes')}>
+                                Criar nova matriz
+                            </button>
+                        )}
                     </div>
                 )}
-            </div>
+            </section>
 
             {/* Modal de Detalhes da Matriz */}
             {matrizSelecionada && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <div style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
-                        <span onClick={() => setMatrizSelecionada(null)} style={{ position: 'absolute', top: '15px', right: '20px', cursor: 'pointer', fontSize: '1.5rem', color: '#64748b' }}>&times;</span>
+                <div className="consultar-matrizes-modal-backdrop">
+                    <div
+                        ref={modalRef}
+                        className="consultar-matrizes-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="detalhes-matriz-titulo"
+                        tabIndex={-1}
+                    >
+                        <button
+                            type="button"
+                            className="consultar-matrizes-modal-close"
+                            onClick={() => setMatrizSelecionada(null)}
+                            aria-label="Fechar detalhes da matriz"
+                        >
+                            &times;
+                        </button>
                         
-                        <h3 style={{ marginTop: 0, color: '#1e293b', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>Detalhes da Matriz: {matrizSelecionada.id}</h3>
+                        <h2 id="detalhes-matriz-titulo" className="consultar-matrizes-modal-title">Detalhes da Matriz: {matrizSelecionada.id}</h2>
                         
                         <p><strong>Nome:</strong> {matrizSelecionada.nome}</p>
                         <p><strong>Autor:</strong> {matrizSelecionada.criadoPor?.email || (typeof matrizSelecionada.criadoPor === 'string' ? matrizSelecionada.criadoPor : '-')}</p>
@@ -283,7 +378,7 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                             </div>
                         )}
 
-                        <button onClick={() => setMatrizSelecionada(null)} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '6px', cursor: 'pointer', marginTop: '1rem', width: '100%', fontWeight: 'bold' }}>
+                        <button type="button" className="consultar-matrizes-primary-button consultar-matrizes-modal-dismiss" onClick={() => setMatrizSelecionada(null)}>
                             Fechar
                         </button>
                     </div>
@@ -297,10 +392,10 @@ function estiloBadgeStatus(status) {
     const s = String(status || '').toUpperCase();
     let bg = '#e2e8f0';
     let color = '#475569';
-    if (s === 'APROVADO') { bg = '#dcfce7'; color = '#16a34a'; }
-    else if (s === 'ENVIADO') { bg = '#e0f2fe'; color = '#0284c7'; }
-    else if (s === 'PENDENTE') { bg = '#fee2e2'; color = '#dc2626'; }
-    else if (s === 'RASCUNHO') { bg = '#fef9c3'; color = '#ca8a04'; }
+    if (s === 'APROVADO') { bg = '#dcfce7'; color = '#166534'; }
+    else if (s === 'ENVIADO') { bg = '#e0f2fe'; color = '#075985'; }
+    else if (s === 'PENDENTE') { bg = '#fee2e2'; color = '#991b1b'; }
+    else if (s === 'RASCUNHO') { bg = '#fef9c3'; color = '#713f12'; }
 
     return {
         padding: '4px 8px',

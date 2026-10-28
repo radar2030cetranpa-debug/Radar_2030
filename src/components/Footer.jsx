@@ -1,6 +1,7 @@
 // src/components/Footer.jsx
 import React from 'react';
 import { Headset } from '@phosphor-icons/react';
+import logoImg from '../assets/logo-recortada.png';
 
 export function Footer({ onNavigate }) {
     return (
@@ -14,6 +15,17 @@ export function Footer({ onNavigate }) {
             marginTop: 'auto'
         }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                <img
+                    src={logoImg}
+                    alt="Radar 2030"
+                    style={{
+                        display: 'block',
+                        width: 'min(180px, 45vw)',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        marginBottom: '0.35rem'
+                    }}
+                />
                 <p style={{ margin: 0, fontWeight: '500', color: '#1e293b' }}>
                     Radar 2030 &mdash; Sistema de Monitoramento do Plano Estratégico Cetran/PA 2030
                 </p>

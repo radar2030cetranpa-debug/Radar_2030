@@ -1,9 +1,10 @@
 // src/pages/PainelComite.jsx
-import { contarTarefas } from '../services/progresso';
-import React, { useState, useEffect, useCallback } from 'react';
+import { contarTarefas, formatarValorReal } from '../services/progresso';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { listarPendentes, votarComite, avaliarComite, estatisticasComite, buscarHistoricoComite } from '../services/comite';
 import Swal from 'sweetalert2';
 import { RadarLoader } from '../components/RadarLoader';
+import '../styles/painelComite.css';
 
 export function PainelComite({ usuarioLogado }) {
     const [pendentesComite, setPendentesComite] = useState([]);
@@ -13,6 +14,9 @@ export function PainelComite({ usuarioLogado }) {
     const [matrizEmAvaliacao, setMatrizEmAvaliacao] = useState(null);
     const [historicoMatriz, setHistoricoMatriz] = useState(null);
     const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+    const modalRef = useRef(null);
+    const elementoAntesDoModalRef = useRef(null);
+    const enviandoRef = useRef(false);
 
     const ehAdminGeral = usuarioLogado?.role === 'ADMIN_GERAL';
 
@@ -46,6 +50,49 @@ export function PainelComite({ usuarioLogado }) {
     useEffect(() => {
         carregarDados();
     }, [carregarDados]);
+
+    useEffect(() => {
+        enviandoRef.current = enviando;
+    }, [enviando]);
+
+    useEffect(() => {
+        if (!matrizEmAvaliacao) return undefined;
+
+        elementoAntesDoModalRef.current = document.activeElement;
+        const modal = modalRef.current;
+        modal?.querySelector('button')?.focus();
+
+        const handleModalKeyDown = (event) => {
+            if (event.key === 'Escape' && !enviandoRef.current) {
+                setMatrizEmAvaliacao(null);
+                return;
+            }
+
+            if (event.key !== 'Tab' || !modal) return;
+
+            const elementosFocaveis = [...modal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+            const primeiro = elementosFocaveis[0];
+            const ultimo = elementosFocaveis[elementosFocaveis.length - 1];
+
+            if (event.shiftKey && document.activeElement === primeiro) {
+                event.preventDefault();
+                ultimo?.focus();
+            } else if (!event.shiftKey && document.activeElement === ultimo) {
+                event.preventDefault();
+                primeiro?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleModalKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleModalKeyDown);
+            if (elementoAntesDoModalRef.current instanceof HTMLElement) {
+                elementoAntesDoModalRef.current.focus();
+            }
+        };
+    }, [matrizEmAvaliacao]);
 
     const abrirModalAvaliacao = async (matriz) => {
         setMatrizEmAvaliacao(matriz);
@@ -128,7 +175,7 @@ export function PainelComite({ usuarioLogado }) {
     };
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="painel-comite-page" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '1.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div>
@@ -144,28 +191,33 @@ export function PainelComite({ usuarioLogado }) {
                             ? 'Como Administrador Geral, homologue as matrizes aprovando ou solicitando ajustes com base nos votos e deliberações do Comitê.'
                             : 'Avalie as matrizes estratégicas enviadas para análise do Comitê Gestor emitindo seu voto consultivo fundamentado.'}
                     </p>
+                    <p className="painel-comite-fluxo">
+                        {ehAdminGeral
+                            ? 'Seu parecer define a decisão final, considerando os votos consultivos e o histórico de revisões.'
+                            : 'Seu voto é consultivo e deve ser acompanhado de justificativa técnica; a homologação final cabe ao Administrador Geral.'}
+                    </p>
                 </div>
             </div>
 
             {/* Estatísticas Rápidas */}
             {estatisticas && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', borderLeft: '4px solid #0284c7' }}>
+                <div className="painel-comite-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', borderLeft: '4px solid #0284c7' }}>
                         <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Aguardando Avaliação</span>
                         <h3 style={{ margin: '4px 0 0 0', fontSize: '1.6rem', color: '#0f172a' }}>{estatisticas.enviados ?? pendentesComite.length}</h3>
                     </div>
-                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', borderLeft: '4px solid #16a34a' }}>
+                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', borderLeft: '4px solid #16a34a' }}>
                         <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Homologadas / Aprovadas</span>
                         <h3 style={{ margin: '4px 0 0 0', fontSize: '1.6rem', color: '#0f172a' }}>{estatisticas.aprovados ?? 0}</h3>
                     </div>
-                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', borderLeft: '4px solid #dc2626' }}>
+                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', borderLeft: '4px solid #dc2626' }}>
                         <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Com Correção Solicitada</span>
                         <h3 style={{ margin: '4px 0 0 0', fontSize: '1.6rem', color: '#0f172a' }}>{estatisticas.pendentes ?? 0}</h3>
                     </div>
                 </div>
             )}
 
-            <div style={{ background: '#fff', borderRadius: '18px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 18px 55px rgba(15, 23, 42, 0.08)' }}>
+            <section className="painel-comite-table-card" aria-label="Matrizes aguardando avaliação" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 18px 55px rgba(15, 23, 42, 0.08)' }}>
                 {carregando ? (
                     <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
                         <RadarLoader
@@ -175,18 +227,18 @@ export function PainelComite({ usuarioLogado }) {
                         />
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', minWidth: '860px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
+                    <div className="painel-comite-table-wrap" role="region" aria-label="Fila de avaliação do Comitê Gestor" tabIndex={0} style={{ overflowX: 'auto' }}>
+                        <table className="painel-comite-table" style={{ width: '100%', minWidth: '860px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>ID</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Nome da Ação</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Autor</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Setor</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Etapas / Tarefas</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Votos</th>
-                                    <th style={{ padding: '16px', fontWeight: 700 }}>Status</th>
-                                    <th style={{ padding: '16px', fontWeight: 700, textAlign: 'center' }}>Ação</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>ID</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Nome da Ação</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Autor</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Setor</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Etapas / Tarefas</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Votos</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700 }}>Status</th>
+                                    <th scope="col" style={{ padding: '16px', fontWeight: 700, textAlign: 'center' }}>Ação</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -196,18 +248,21 @@ export function PainelComite({ usuarioLogado }) {
                                         const autorSetor = reg.criadoPor?.setor || reg.setor || '-';
                                         const totalVotos = Array.isArray(reg.votos) ? reg.votos.length : 0;
                                         const votosAprovar = Array.isArray(reg.votos) ? reg.votos.filter(v => v.voto === 'APROVAR').length : 0;
+                                        const votosRejeitar = Array.isArray(reg.votos) ? reg.votos.filter(v => v.voto === 'REJEITAR').length : 0;
                                         const meuVoto = (reg.votos || []).find(v => v.usuario?.id === usuarioLogado?.id || v.usuarioId === usuarioLogado?.id);
 
                                         return (
-                                            <tr key={reg.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                <td style={{ padding: '16px', fontWeight: '700', color: '#2563eb', verticalAlign: 'top' }}>{reg.id}</td>
-                                                <td style={{ padding: '16px', color: '#0f172a', verticalAlign: 'top', maxWidth: '220px', whiteSpace: 'normal' }}>{reg.nome}</td>
-                                                <td style={{ padding: '16px', color: '#475569', verticalAlign: 'top' }}>{autorEmail}</td>
-                                                <td style={{ padding: '16px', color: '#475569', verticalAlign: 'top' }}>{autorSetor}</td>
-                                                <td style={{ padding: '16px', color: '#0f172a', fontWeight: '600', verticalAlign: 'top' }}>{(() => { const et = (reg.acoes || []).flatMap(a => a.etapas || []); return `${et.length} / ${contarTarefas(et).total}`; })()}</td>
-                                                <td style={{ padding: '16px', verticalAlign: 'top' }}>
-                                                    <span style={{ fontSize: '0.85rem', color: totalVotos > 0 ? '#166534' : '#64748b' }}>
-                                                        {totalVotos > 0 ? `${votosAprovar}/${totalVotos} a favor` : 'Nenhum'}
+                                            <tr key={reg.id} className="painel-comite-row" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                <td data-label="ID" style={{ padding: '16px', fontWeight: '700', color: '#2563eb', verticalAlign: 'top' }}>{reg.id}</td>
+                                                <td data-label="Nome da Ação" style={{ padding: '16px', color: '#0f172a', verticalAlign: 'top', maxWidth: '220px', whiteSpace: 'normal' }}>{reg.nome}</td>
+                                                <td data-label="Autor" style={{ padding: '16px', color: '#475569', verticalAlign: 'top' }}>{autorEmail}</td>
+                                                <td data-label="Setor" style={{ padding: '16px', color: '#475569', verticalAlign: 'top' }}>{autorSetor}</td>
+                                                <td data-label="Etapas / Tarefas" style={{ padding: '16px', color: '#0f172a', fontWeight: '600', verticalAlign: 'top' }}>{(() => { const et = (reg.acoes || []).flatMap(a => a.etapas || []); return `${et.length} / ${contarTarefas(et).total}`; })()}</td>
+                                                <td data-label="Votos" style={{ padding: '16px', verticalAlign: 'top' }}>
+                                                    <span className="painel-comite-votes">
+                                                        {totalVotos > 0
+                                                            ? `${votosAprovar} ${votosAprovar === 1 ? 'favorável' : 'favoráveis'} · ${votosRejeitar} ${votosRejeitar === 1 ? 'contrário' : 'contrários'}`
+                                                            : 'Nenhum voto registrado'}
                                                     </span>
                                                     {meuVoto && (
                                                         <span style={{ display: 'block', fontSize: '0.72rem', color: meuVoto.voto === 'APROVAR' ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>
@@ -215,9 +270,11 @@ export function PainelComite({ usuarioLogado }) {
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td style={{ padding: '16px', verticalAlign: 'top' }}><span style={estiloBadgeStatus(reg.status)}>{reg.status}</span></td>
-                                                <td style={{ padding: '16px', textAlign: 'center', verticalAlign: 'top' }}>
+                                                <td data-label="Status" style={{ padding: '16px', verticalAlign: 'top' }}><span style={estiloBadgeStatus(reg.status)}>{reg.status}</span></td>
+                                                <td data-label="Ação" style={{ padding: '16px', textAlign: 'center', verticalAlign: 'top' }}>
                                                     <button 
+                                                        type="button"
+                                                        className="painel-comite-decision-button"
                                                         onClick={() => abrirModalAvaliacao(reg)} 
                                                         style={{ 
                                                             background: ehAdminGeral ? '#1e40af' : '#2563eb', 
@@ -241,10 +298,10 @@ export function PainelComite({ usuarioLogado }) {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                                        <td className="painel-comite-empty-cell" colSpan="8" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
                                             <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', maxWidth: '560px' }}>
                                                 <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.35rem' }}>Nenhuma matriz aguardando avaliação.</h3>
-                                                <p style={{ margin: 0, lineHeight: 1.75 }}>As matrizes enviadas pelos usuários aparecerão aqui para análise do Comitê.</p>
+                                                <p style={{ margin: 0, lineHeight: 1.75 }}>A fila está vazia no momento. As novas matrizes enviadas aparecerão aqui para análise.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -253,13 +310,22 @@ export function PainelComite({ usuarioLogado }) {
                         </table>
                     </div>
                 )}
-            </div>
+            </section>
 
             {/* Modal de Avaliação do Comitê */}
             {matrizEmAvaliacao && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.55)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '18px', width: '100%', maxWidth: '1000px', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 80px rgba(15, 23, 42, 0.16)' }}>
-                        <button onClick={() => setMatrizEmAvaliacao(null)} style={{ position: 'absolute', top: '18px', right: '18px', border: 'none', background: 'transparent', fontSize: '1.7rem', color: '#475569', cursor: 'pointer', lineHeight: 1 }} aria-label="Fechar painel de avaliação">×</button>
+                <div className="painel-comite-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.55)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div
+                        ref={modalRef}
+                        className="painel-comite-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="painel-comite-modal-title"
+                        aria-describedby="painel-comite-modal-description"
+                        tabIndex={-1}
+                        style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', width: '100%', maxWidth: '1000px', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto', position: 'relative', boxShadow: '0 24px 80px rgba(15, 23, 42, 0.16)' }}
+                    >
+                        <button type="button" onClick={() => setMatrizEmAvaliacao(null)} className="painel-comite-modal-close" aria-label="Fechar painel de avaliação" disabled={enviando}>×</button>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -267,8 +333,8 @@ export function PainelComite({ usuarioLogado }) {
                                     {ehAdminGeral ? 'Homologação Final' : 'Voto Consultivo do Comitê Gestor'}
                                 </p>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <h2 style={{ margin: 0, fontSize: '1.9rem', color: '#0f172a' }}>Avaliar Matriz: {matrizEmAvaliacao.id}</h2>
-                                    <p style={{ margin: 0, color: '#475569', fontSize: '1rem', maxWidth: '780px', lineHeight: 1.75 }}>
+                                    <h2 id="painel-comite-modal-title" style={{ margin: 0, fontSize: '1.9rem', color: '#0f172a' }}>Avaliar Matriz: {matrizEmAvaliacao.id}</h2>
+                                    <p id="painel-comite-modal-description" style={{ margin: 0, color: '#475569', fontSize: '1rem', maxWidth: '780px', lineHeight: 1.75 }}>
                                         {ehAdminGeral
                                             ? 'Como Administrador Geral, decida pela aprovação da matriz ou pelo retorno com solicitação de ajustes.'
                                             : 'Revise os dados enviados pelo usuário e registre seu voto consultivo técnico acompanhado de comentário.'}
@@ -276,7 +342,7 @@ export function PainelComite({ usuarioLogado }) {
                                 </div>
                             </div>
 
-                            <section style={{ display: 'grid', gap: '1rem', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                            <section style={{ display: 'grid', gap: '1rem', background: '#f8fafc', borderRadius: '8px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
                                 <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Identificação</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                                     <div style={estiloInfoItem}><span style={estiloInfoLabel}>ID</span><span style={estiloInfoValue}>{matrizEmAvaliacao.id}</span></div>
@@ -286,7 +352,7 @@ export function PainelComite({ usuarioLogado }) {
                                 </div>
                             </section>
 
-                            <section style={{ display: 'grid', gap: '0.85rem', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                            <section style={{ display: 'grid', gap: '0.85rem', borderRadius: '8px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
                                 <div>
                                     <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Histórico de revisões</h3>
                                     <p style={{ margin: '0.45rem 0 0', color: '#64748b', lineHeight: 1.6 }}>
@@ -294,7 +360,7 @@ export function PainelComite({ usuarioLogado }) {
                                     </p>
                                 </div>
                                 {historicoMatriz?.matriz?.avaliadoPor && (
-                                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.9rem 1rem' }}>
+                                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '0.9rem 1rem' }}>
                                         <strong style={{ color: '#166534' }}>
                                             {historicoMatriz.matriz.status === 'APROVADO' ? 'Aprovada por' : 'Solicitou ajustes'}: {historicoMatriz.matriz.avaliadoPor.email}
                                         </strong>
@@ -324,7 +390,7 @@ export function PainelComite({ usuarioLogado }) {
                                             const numeroRevisaoAtual = Math.max(...historicoMatriz.revisoes.map(item => item.numero));
                                             const revisaoAtual = revisao.numero === numeroRevisaoAtual;
                                             return (
-                                                <div key={revisao.id} style={{ background: revisaoAtual ? '#eff6ff' : '#f8fafc', border: `1px solid ${revisaoAtual ? '#60a5fa' : '#e2e8f0'}`, borderLeft: `4px solid ${revisaoAtual ? '#2563eb' : '#94a3b8'}`, borderRadius: '10px', padding: '0.9rem 1rem' }}>
+                                                <div key={revisao.id} style={{ background: revisaoAtual ? '#eff6ff' : '#f8fafc', border: `1px solid ${revisaoAtual ? '#60a5fa' : '#e2e8f0'}`, borderLeft: `4px solid ${revisaoAtual ? '#0b4383' : '#94a3b8'}`, borderRadius: '8px', padding: '0.9rem 1rem' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                                                         <strong style={{ color: '#0f172a' }}>Revisão {revisao.numero}</strong>
                                                         <span style={{ ...estiloBadgeStatus(revisaoAtual ? 'ENVIADO' : 'RASCUNHO'), backgroundColor: revisaoAtual ? '#dbeafe' : '#e2e8f0', color: revisaoAtual ? '#1d4ed8' : '#475569' }}>
@@ -369,7 +435,7 @@ export function PainelComite({ usuarioLogado }) {
                             </section>
 
                             {matrizEmAvaliacao.oque && (
-                                <section style={{ display: 'grid', gap: '1rem', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                                <section style={{ display: 'grid', gap: '1rem', borderRadius: '8px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
                                     <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>5W2H da matriz (formato anterior)</h3>
                                     <div style={{ display: 'grid', gap: '1rem' }}>
                                         <div style={estiloInfoItem}><span style={estiloInfoLabel}>O quê?</span><span style={estiloInfoValue}>{matrizEmAvaliacao.oque}</span></div>
@@ -382,7 +448,7 @@ export function PainelComite({ usuarioLogado }) {
                                 </section>
                             )}
 
-                            <section style={{ display: 'grid', gap: '1rem', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                            <section style={{ display: 'grid', gap: '1rem', background: '#f8fafc', borderRadius: '8px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
                                 <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Indicadores e Ações Vinculadas</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
                                     <div style={estiloMetricCard}><span style={estiloMetricLabel}>Progresso</span><strong style={estiloMetricValue}>{matrizEmAvaliacao.percentual}%</strong></div>
@@ -402,15 +468,19 @@ export function PainelComite({ usuarioLogado }) {
                                                         </span>
                                                         {item.etapas.map((etapa, i) => (
                                                             <details key={etapa.id || i} style={{ marginTop: '4px' }}>
-                                                                <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{etapa.titulo || `Etapa ${i + 1}`} (impacto {String(etapa.impacto || '-').toLowerCase()})</summary>
+                                                                <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{etapa.titulo || `Etapa ${i + 1}`}</summary>
                                                                 {(etapa.tarefas || []).map((t, j) => (
                                                                     <div key={t.id || j} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px', margin: '4px 0' }}>
-                                                                        <strong>Tarefa {j + 1}:</strong> {t.titulo || '-'}<br />
+                                                                        <strong>Tarefa {j + 1}:</strong> {t.titulo || '-'} · Impacto: {String(t.impacto || etapa.impacto || 'MEDIO').toLowerCase()}<br />
                                                                         Por quê: {t.porque || '-'} | Quem: {t.quem || '-'} | Onde: {t.onde || '-'} | Quando: {t.quando || '-'}<br />
-                                                                        Como: {t.como || '-'} | Quanto: {t.quanto || '-'}
+                                                                        Como: {t.como || '-'} | Quanto: {t.quanto ? formatarValorReal(t.quanto) : '-'}
+                                                                        {(t.observacao || (j === 0 && etapa.observacao)) && (
+                                                                            <div style={{ marginTop: '4px' }}>
+                                                                                Observações da tarefa: {t.observacao || etapa.observacao}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 ))}
-                                                                {etapa.observacao && <p style={{ margin: '4px 0 0 0' }}>Observações: {etapa.observacao}</p>}
                                                             </details>
                                                         ))}
                                                     </div>
@@ -423,7 +493,7 @@ export function PainelComite({ usuarioLogado }) {
 
                             {/* Votos Registrados pelo Comitê Gestor */}
                             {Array.isArray(matrizEmAvaliacao.votos) && matrizEmAvaliacao.votos.length > 0 && (
-                                <section style={{ display: 'grid', gap: '0.75rem', background: '#f1f5f9', borderRadius: '16px', padding: '1.25rem', border: '1px solid #cbd5e1' }}>
+                                <section style={{ display: 'grid', gap: '0.75rem', background: '#f1f5f9', borderRadius: '8px', padding: '1.25rem', border: '1px solid #cbd5e1' }}>
                                     <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Votos Registrados pelos Usuários do Comitê Gestor</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         {matrizEmAvaliacao.votos.map(v => (
@@ -441,7 +511,7 @@ export function PainelComite({ usuarioLogado }) {
                                 </section>
                             )}
 
-                            <section style={{ display: 'grid', gap: '1rem', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
+                            <section style={{ display: 'grid', gap: '1rem', borderRadius: '8px', padding: '1.25rem', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
                                     <div>
                                         <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>
@@ -468,23 +538,25 @@ export function PainelComite({ usuarioLogado }) {
 
                                 <form onSubmit={handleSalvarParecer} style={{ display: 'grid', gap: '1rem' }}>
                                     <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                        <label style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
+                                        <label htmlFor="comite-decisao" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
                                             {ehAdminGeral ? 'Decisão Final / Status Oficial *' : 'Voto *'}
                                         </label>
                                         {ehAdminGeral ? (
-                                            <select 
-                                                value={decisao} 
+                                            <select
+                                                id="comite-decisao"
+                                                value={decisao}
                                                 onChange={(e) => setDecisao(e.target.value)}
-                                                style={{ width: '100%', padding: '0.85rem 1rem', border: '1px solid #cbd5e1', borderRadius: '12px', background: '#fff', fontSize: '0.95rem', color: '#0f172a' }}
+                                                style={{ width: '100%', padding: '0.85rem 1rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '0.95rem', color: '#0f172a' }}
                                             >
                                                 <option value="APROVADO">Aprovado (Homologar)</option>
                                                 <option value="PENDENTE">Pendente / Solicitar Ajustes</option>
                                             </select>
                                         ) : (
-                                            <select 
-                                                value={decisao} 
+                                            <select
+                                                id="comite-decisao"
+                                                value={decisao}
                                                 onChange={(e) => setDecisao(e.target.value)}
-                                                style={{ width: '100%', padding: '0.85rem 1rem', border: '1px solid #cbd5e1', borderRadius: '12px', background: '#fff', fontSize: '0.95rem', color: '#0f172a' }}
+                                                style={{ width: '100%', padding: '0.85rem 1rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '0.95rem', color: '#0f172a' }}
                                             >
                                                 <option value="APROVAR">Aprovar (Recomendo aprovação)</option>
                                                 <option value="REJEITAR">Rejeitar / Solicitar Ajustes</option>
@@ -493,16 +565,17 @@ export function PainelComite({ usuarioLogado }) {
                                     </div>
 
                                     <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                        <label style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
+                                        <label htmlFor="comite-comentario" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
                                             {ehAdminGeral ? 'Parecer Oficial da Diretoria / Comitê Gestor *' : 'Justificativa do Voto / Parecer Técnico *'}
                                         </label>
                                         <textarea 
+                                            id="comite-comentario"
                                             rows="4" 
                                             value={comentario} 
                                             onChange={(e) => setComentario(e.target.value)} 
                                             required 
                                             placeholder="Digite as observações, fundamentos técnicos ou correções necessárias..."
-                                            style={{ width: '100%', minHeight: '140px', padding: '1rem', border: '1px solid #cbd5e1', borderRadius: '14px', boxSizing: 'border-box', resize: 'vertical', fontSize: '0.95rem', color: '#0f172a' }}
+                                            style={{ width: '100%', minHeight: '140px', padding: '1rem', border: '1px solid #cbd5e1', borderRadius: '8px', boxSizing: 'border-box', resize: 'vertical', fontSize: '0.95rem', color: '#0f172a' }}
                                         ></textarea>
                                     </div>
 
@@ -510,11 +583,11 @@ export function PainelComite({ usuarioLogado }) {
                                         <button 
                                             type="submit" 
                                             disabled={enviando}
-                                            style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.95rem 1.2rem', borderRadius: '14px', fontWeight: 700, cursor: enviando ? 'not-allowed' : 'pointer', width: '100%', opacity: enviando ? 0.7 : 1 }}
+                                            style={{ background: '#0b4383', color: '#fff', border: 'none', padding: '0.95rem 1.2rem', borderRadius: '8px', fontWeight: 700, cursor: enviando ? 'not-allowed' : 'pointer', width: '100%', opacity: enviando ? 0.7 : 1 }}
                                         >
                                             {enviando ? 'Salvando...' : (ehAdminGeral ? 'Emitir Parecer Oficial' : 'Registrar Voto Consultivo')}
                                         </button>
-                                        <button type="button" onClick={() => setMatrizEmAvaliacao(null)} style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '0.95rem 1.2rem', borderRadius: '14px', fontWeight: 700, cursor: 'pointer', width: '100%' }}>
+                                        <button type="button" disabled={enviando} onClick={() => setMatrizEmAvaliacao(null)} style={{ background: '#fff', color: '#0b4383', border: '1px solid #0b4383', padding: '0.95rem 1.2rem', borderRadius: '8px', fontWeight: 700, cursor: enviando ? 'not-allowed' : 'pointer', width: '100%' }}>
                                             Fechar sem salvar
                                         </button>
                                     </div>

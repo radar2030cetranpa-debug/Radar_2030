@@ -28,10 +28,46 @@ export const CAMPOS_5W2H_TAREFA = [
     { chave: 'quanto', rotulo: 'Quanto?', dica: 'Recursos necessários para realizar a tarefa.', tipo: 'text' }
 ];
 
+const formatadorReal = new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+});
+
+export function obterNumeroReal(valor) {
+    const texto = String(valor ?? '').trim();
+    if (!texto) return null;
+
+    const normalizado = texto.includes(',')
+        ? texto.replace(/\./g, '').replace(',', '.')
+        : texto;
+    const numero = Number(normalizado);
+    return Number.isFinite(numero) && numero >= 0 ? numero : null;
+}
+
+export function formatarNumeroReal(valor) {
+    const numero = obterNumeroReal(valor);
+    return numero === null ? '' : formatadorReal.format(numero);
+}
+
+export function formatarValorReal(valor) {
+    const numero = obterNumeroReal(valor);
+    return numero === null ? String(valor ?? '') : `R$ ${formatadorReal.format(numero)}`;
+}
+
+export function converterEntradaParaReal(valor) {
+    const digitos = valor.replace(/\D/g, '');
+    if (!digitos) return '';
+
+    const reais = (digitos.slice(0, -2) || '0').replace(/^0+(?=\d)/, '');
+    const centavos = digitos.slice(-2).padStart(2, '0');
+    return `${reais}.${centavos}`;
+}
+
 export function criarTarefaVazia() {
     return {
         id: `TF-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         titulo: '', porque: '', quem: '', onde: '', quando: '', como: '', quanto: '',
+        impacto: 'MEDIO', observacao: '',
         concluida: false
     };
 }
@@ -40,10 +76,25 @@ export function criarEtapaVazia(titulo = '') {
     return {
         id: `ET-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         titulo,
-        impacto: 'MEDIO',
-        observacao: '',
         tarefas: []
     };
+}
+
+export function migrarMetadadosEtapaParaTarefas(etapas = []) {
+    return etapas.map(etapa => {
+        const tarefas = Array.isArray(etapa.tarefas) ? etapa.tarefas : [];
+        if (tarefas.length === 0) return etapa;
+
+        const { impacto, observacao, ...etapaSemMetadados } = etapa;
+        return {
+            ...etapaSemMetadados,
+            tarefas: tarefas.map((tarefa, indice) => ({
+                ...tarefa,
+                impacto: tarefa.impacto || impacto || 'MEDIO',
+                observacao: tarefa.observacao || (indice === 0 ? observacao : '') || ''
+            }))
+        };
+    });
 }
 
 export function etapaTemTarefas(etapa) {

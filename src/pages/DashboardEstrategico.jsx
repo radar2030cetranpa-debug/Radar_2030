@@ -7,6 +7,8 @@ import {
     ChartLineUp,
     CheckCircle,
     ClockCounterClockwise,
+    FileCsv,
+    FileXls,
     Funnel,
     Hourglass,
     Stack,
@@ -25,15 +27,18 @@ import {
 import { listarMatrizes, buscarHistoricoMatriz } from '../services/matrizes';
 import { listarAcoes } from '../services/acoes';
 import { acoesEstrategicas } from '../services/acoes_data';
+import { exportarMatrizesAprovadasCSV, exportarMatrizesAprovadasExcel } from '../services/exportService';
 import { ehAdmin } from '../services/permissoes';
 import { RadarLoader } from '../components/RadarLoader';
+import '../styles/dashboard.css';
 import { 
     SETORES_RADAR, 
     calcularPercentualEtapas, 
     calcularPercentualEtapa,
     contarTarefas,
     normalizarSetor,
-    obterPercentuaisPorAcao
+    obterPercentuaisPorAcao,
+    formatarValorReal
 } from '../services/progresso';
 import Swal from 'sweetalert2';
 
@@ -111,7 +116,7 @@ function SecaoAcordeao({ id, icone: Icone, titulo, descricao, abertaInicialmente
                     outlineOffset: '-3px'
                 }}
             >
-                <Icone size={22} weight="regular" style={{ flex: '0 0 auto', color: '#1d4ed8' }} aria-hidden="true" />
+                <Icone size={22} weight="regular" style={{ flex: '0 0 auto', color: '#0b4383' }} aria-hidden="true" />
                 <span style={{ flex: 1, minWidth: 0 }}>
                     <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem', lineHeight: 1.4 }}>{titulo}</strong>
                     <span style={{ display: 'block', marginTop: '2px', color: '#475569', fontSize: '0.875rem', lineHeight: 1.45 }}>{descricao}</span>
@@ -252,6 +257,41 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
     const [carregando, setCarregando] = useState(true);
     const podeEditarEstrategico = ehAdmin(usuarioLogado);
+    const podeExportar = podeEditarEstrategico;
+
+    const handleExportarCSV = () => {
+        if (!podeExportar) return;
+
+        const resultado = exportarMatrizesAprovadasCSV(matrizesBanco);
+        if (resultado.sucesso) {
+            Swal.fire({
+                icon: 'success',
+                title: 'CSV gerado com sucesso!',
+                text: `${resultado.quantidade} registro(s) exportado(s) para CSV.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({ icon: 'info', title: 'Nada para exportar', text: resultado.mensagem, confirmButtonColor: '#2563eb' });
+        }
+    };
+
+    const handleExportarExcel = () => {
+        if (!podeExportar) return;
+
+        const resultado = exportarMatrizesAprovadasExcel(matrizesBanco);
+        if (resultado.sucesso) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Excel gerado com sucesso!',
+                text: `${resultado.quantidade} registro(s) exportado(s) para .xlsx.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({ icon: 'info', title: 'Nada para exportar', text: resultado.mensagem, confirmButtonColor: '#2563eb' });
+        }
+    };
 
     useEffect(() => {
         let ativo = true;
@@ -609,15 +649,15 @@ export function DashboardEstrategico({ usuarioLogado }) {
             text: `Deseja ${acaoTexto} para "${projetoCodigo} - ${nomeProjeto}"?`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: novoStatus ? '#ca8a04' : '#64748b',
-            cancelButtonColor: '#94a3b8',
+            confirmButtonColor: novoStatus ? '#0b4383' : '#ed1c24',
+            cancelButtonColor: '#0b4383',
             confirmButtonText: novoStatus ? 'Sim, marcar ⭐' : 'Sim, remover',
             cancelButtonText: 'Cancelar'
         });
 
         if (result.isConfirmed) {
             try {
-                await alternarProjetoEstrategico(projetoCodigo, novoStatus, usuarioLogado?.email).catch(() => {});
+                await alternarProjetoEstrategico(projetoCodigo, novoStatus, usuarioLogado?.email);
                 Swal.fire({
                     icon: 'success',
                     title: novoStatus ? '⭐ Projeto Estratégico Definido!' : 'Destaque removido',
@@ -650,12 +690,13 @@ export function DashboardEstrategico({ usuarioLogado }) {
     }
 
     return (
-        <div style={{ padding: '2rem 1.5rem', maxWidth: '1380px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
+        <div className="dashboard-shell">
+        <div className="dashboard-content" style={{ fontFamily: 'Inter, sans-serif' }}>
             
             {/* Header Executivo & Lente de Setor */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem', marginBottom: '2rem' }}>
+            <div className="dashboard-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem', marginBottom: '2rem' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="dashboard-heading-brand" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                             PETRANS 2030 • Inteligência Analítica
                         </span>
@@ -670,6 +711,32 @@ export function DashboardEstrategico({ usuarioLogado }) {
                         Monitoramento centrado na Ação Estratégica, nos passos do 5W2H e nas deliberações do Comitê Gestor.
                     </p>
                 </div>
+
+                <div className="dashboard-heading-actions">
+                    {podeExportar && (
+                        <div className="dashboard-export-actions" role="group" aria-label="Exportar matrizes aprovadas">
+                            <button
+                                type="button"
+                                className="button painel-export-button painel-export-csv"
+                                onClick={handleExportarCSV}
+                                disabled={matrizesBanco.length === 0}
+                                aria-label="Exportar matrizes aprovadas em arquivo CSV"
+                            >
+                                <FileCsv size={18} weight="bold" aria-hidden="true" />
+                                Exportar CSV
+                            </button>
+                            <button
+                                type="button"
+                                className="button painel-export-button painel-export-excel"
+                                onClick={handleExportarExcel}
+                                disabled={matrizesBanco.length === 0}
+                                aria-label="Exportar matrizes aprovadas em arquivo Excel"
+                            >
+                                <FileXls size={18} weight="bold" aria-hidden="true" />
+                                Exportar Excel
+                            </button>
+                        </div>
+                    )}
 
                 {/* Filtro Lente de Setor */}
                 <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '0.75rem 1.15rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)', display: abaAtiva === 'foco' ? 'none' : 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -687,6 +754,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                         ))}
                     </select>
                     <button
+                    className="dashboard-button-primary"
                     type="button"
                         onClick={carregarDados}
                         title="Atualizar dados"
@@ -696,37 +764,38 @@ export function DashboardEstrategico({ usuarioLogado }) {
                         <ArrowClockwise size={18} weight="bold" className={carregando ? 'spin' : undefined} aria-hidden="true" />
                     </button>
                 </div>
+                </div>
             </div>
 
             {/* Cards de KPIs Principais no Topo */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={estiloKpiCard('#2563eb')}>
+            <div className="dashboard-kpis" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Progresso Geral do Plano</span>
-                    <h2 style={{ fontSize: '2.2rem', color: '#0f172a', margin: '4px 0 0 0', fontWeight: 800 }}>
+                    <h2 style={estiloKpiNumero}>
                         {kpis.progressoGlobal ?? 0}%
                     </h2>
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Média consolidada em cascata</span>
                 </div>
 
-                <div style={estiloKpiCard('#16a34a')}>
+                <div style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Ações Concluídas (100%)</span>
-                    <h2 style={{ fontSize: '2.2rem', color: '#16a34a', margin: '4px 0 0 0', fontWeight: 800 }}>
+                    <h2 style={estiloKpiNumero}>
                         {kpis.acoesConcluidas ?? 0}
                     </h2>
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>De {kpis.totalAcoes ?? 0} ações totais</span>
                 </div>
 
-                <div style={estiloKpiCard('#d97706')}>
+                <div style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Ações em Andamento</span>
-                    <h2 style={{ fontSize: '2.2rem', color: '#d97706', margin: '4px 0 0 0', fontWeight: 800 }}>
+                    <h2 style={estiloKpiNumero}>
                         {kpis.acoesEmAndamento ?? 0}
                     </h2>
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Etapas em execução física</span>
                 </div>
 
-                <div style={estiloKpiCard('#7c3aed')}>
+                <div style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>{kpis.totalEstrategicos ?? 8} Projetos Estratégicos</span>
-                    <h2 style={{ fontSize: '2.2rem', color: '#7c3aed', margin: '4px 0 0 0', fontWeight: 800 }}>
+                    <h2 style={estiloKpiNumero}>
                         {kpis.progressoMedioEstrategicos ?? 0}%
                     </h2>
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Avanço médio prioritário</span>
@@ -734,12 +803,13 @@ export function DashboardEstrategico({ usuarioLogado }) {
             </div>
 
             {/* Barra de Navegação das Abas do Dashboard */}
-            <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e2e8f0', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '2px' }}>
+            <nav className="dashboard-tabs" aria-label="Visões estratégicas do dashboard">
                 <button
                     type="button"
                     onClick={() => setAbaAtiva('foco')}
                     aria-pressed={abaAtiva === 'foco'}
-                    style={estiloAba(abaAtiva === 'foco', '#2563eb')}
+                    className="dashboard-tab"
+                    style={estiloAba(abaAtiva === 'foco')}
                 >
                     <Stack size={18} weight={abaAtiva === 'foco' ? 'fill' : 'bold'} aria-hidden="true" />
                     <span>Ação em Foco & Comitê Gestor</span>
@@ -749,6 +819,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     type="button"
                     onClick={() => setAbaAtiva('meta')}
                     aria-pressed={abaAtiva === 'meta'}
+                    className="dashboard-tab"
                     style={estiloAba(abaAtiva === 'meta')}
                 >
                     <ChartLineUp size={18} weight={abaAtiva === 'meta' ? 'fill' : 'bold'} aria-hidden="true" />
@@ -759,6 +830,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     type="button"
                     onClick={() => setAbaAtiva('eixos')}
                     aria-pressed={abaAtiva === 'eixos'}
+                    className="dashboard-tab"
                     style={estiloAba(abaAtiva === 'eixos')}
                 >
                     <TreeStructure size={18} weight={abaAtiva === 'eixos' ? 'fill' : 'bold'} aria-hidden="true" />
@@ -769,9 +841,10 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     type="button"
                     onClick={() => setAbaAtiva('projetos')}
                     aria-pressed={abaAtiva === 'projetos'}
+                    className="dashboard-tab"
                     style={estiloAba(abaAtiva === 'projetos')}
                 >
-                    <Star size={18} weight={abaAtiva === 'projetos' ? 'fill' : 'bold'} style={{ color: '#ca8a04' }} aria-hidden="true" />
+                    <Star size={18} weight={abaAtiva === 'projetos' ? 'fill' : 'bold'} aria-hidden="true" />
                     <span>2. Todos os Projetos ({projetos.length})</span>
                 </button>
 
@@ -779,6 +852,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     type="button"
                     onClick={() => setAbaAtiva('prazos')}
                     aria-pressed={abaAtiva === 'prazos'}
+                    className="dashboard-tab"
                     style={estiloAba(abaAtiva === 'prazos')}
                 >
                     <Hourglass size={18} weight={abaAtiva === 'prazos' ? 'fill' : 'bold'} aria-hidden="true" />
@@ -789,12 +863,13 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     type="button"
                     onClick={() => setAbaAtiva('setores')}
                     aria-pressed={abaAtiva === 'setores'}
+                    className="dashboard-tab"
                     style={estiloAba(abaAtiva === 'setores')}
                 >
                     <Buildings size={18} weight={abaAtiva === 'setores' ? 'fill' : 'bold'} aria-hidden="true" />
                     <span>4. Desempenho por Setores</span>
                 </button>
-            </div>
+            </nav>
 
             {/* ========================================================================= */}
             {/* ABA CENTRAL: AÇÃO EM FOCO, DETALHAMENTO 5W2H E PASSOS DO COMITÊ GESTOR   */}
@@ -1024,9 +1099,6 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                         </strong>
                                                     </div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: etapa.impacto === 'ALTO' ? '#fef2f2' : '#f0fdf4', color: etapa.impacto === 'ALTO' ? '#dc2626' : '#16a34a' }}>
-                                                            Impacto: {etapa.impacto || 'MÉDIO'}
-                                                        </span>
                                                         <span style={{ fontSize: '1.1rem', fontWeight: 800, color: corDoProgresso(pctEtapa) }}>
                                                             {pctEtapa}%
                                                         </span>
@@ -1041,7 +1113,10 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                 {/* Detalhamento das Tarefas 5W2H do Passo */}
                                                 {tarefas.length > 0 ? (
                                                     <div style={{ display: 'grid', gap: '0.85rem' }}>
-                                                        {tarefas.map((tarefa, tIdx) => (
+                                                        {tarefas.map((tarefa, tIdx) => {
+                                                            const impactoTarefa = tarefa.impacto || etapa.impacto || 'MEDIO';
+                                                            const observacaoTarefa = tarefa.observacao || (tIdx === 0 ? etapa.observacao : '');
+                                                            return (
                                                             <div key={tarefa.id || tIdx} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
                                                                     {tarefa.concluida
@@ -1054,18 +1129,26 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                                         {tarefa.concluida ? 'CONCLUÍDA' : 'EM EXECUÇÃO'}
                                                                     </span>
                                                                 </div>
+                                                                <span style={{ display: 'inline-block', marginBottom: '0.5rem', padding: '2px 8px', borderRadius: '6px', background: impactoTarefa === 'ALTO' ? '#fef2f2' : impactoTarefa === 'BAIXO' ? '#f1f5f9' : '#eff6ff', color: impactoTarefa === 'ALTO' ? '#b91c1c' : impactoTarefa === 'BAIXO' ? '#475569' : '#1d4ed8', fontSize: '0.75rem', fontWeight: 700 }}>
+                                                                    Impacto da tarefa: {{ BAIXO: 'Baixo', MEDIO: 'Médio', ALTO: 'Alto' }[impactoTarefa] || impactoTarefa}
+                                                                </span>
 
                                                                 {/* Grid 5W2H da Tarefa */}
                                                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem', background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '8px', fontSize: '0.875rem', marginTop: '0.5rem' }}>
                                                                     {tarefa.quem && <div><span style={{ color: '#64748b', fontWeight: 700 }}>QUEM:</span> {tarefa.quem}</div>}
                                                                     {tarefa.quando && <div><span style={{ color: '#64748b', fontWeight: 700 }}>QUANDO:</span> {tarefa.quando}</div>}
                                                                     {tarefa.onde && <div><span style={{ color: '#64748b', fontWeight: 700 }}>ONDE:</span> {tarefa.onde}</div>}
-                                                                    {tarefa.quanto && <div><span style={{ color: '#64748b', fontWeight: 700 }}>QUANTO:</span> {tarefa.quanto}</div>}
+                                                                    {tarefa.quanto && <div><span style={{ color: '#64748b', fontWeight: 700 }}>QUANTO:</span> {formatarValorReal(tarefa.quanto)}</div>}
                                                                     {tarefa.porque && <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#64748b', fontWeight: 700 }}>POR QUÊ:</span> {tarefa.porque}</div>}
                                                                     {tarefa.como && <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#64748b', fontWeight: 700 }}>COMO:</span> {tarefa.como}</div>}
                                                                 </div>
+                                                                {observacaoTarefa && (
+                                                                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#475569', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                                                                        <strong>Observações da tarefa:</strong> {observacaoTarefa}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        ))}
+                                                        );})}
                                                     </div>
                                                 ) : (
                                                     <p style={{ margin: 0, color: '#475569', fontSize: '0.875rem', fontStyle: 'italic' }}>
@@ -1073,9 +1156,9 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                     </p>
                                                 )}
 
-                                                {etapa.observacao && (
+                                                {tarefas.length === 0 && etapa.observacao && (
                                                     <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#475569', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
-                                                        <strong>Observações:</strong> {etapa.observacao}
+                                                        <strong>Observação antiga da etapa:</strong> {etapa.observacao}
                                                     </div>
                                                 )}
                                             </div>
@@ -1309,6 +1392,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button
+                                className="dashboard-button-toggle"
                                 type="button"
                                 onClick={() => setApenasEstrategicos(false)}
                                 aria-pressed={!apenasEstrategicos}
@@ -1317,12 +1401,13 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                 Todos ({projetos.length})
                             </button>
                             <button
+                                className="dashboard-button-toggle"
                                 type="button"
                                 onClick={() => setApenasEstrategicos(true)}
                                 aria-pressed={apenasEstrategicos}
                                 style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: apenasEstrategicos ? '2px solid #ca8a04' : '1px solid #cbd5e1', background: apenasEstrategicos ? '#fefce8' : '#fff', color: apenasEstrategicos ? '#854d0e' : '#475569', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                             >
-                                <Star size={18} weight={apenasEstrategicos ? 'fill' : 'bold'} style={{ color: '#854d0e' }} aria-hidden="true" />
+                                <Star size={18} weight={apenasEstrategicos ? 'fill' : 'bold'} aria-hidden="true" />
                                 Apenas Estratégicos ({projetos.filter(p => p.isEstrategico).length})
                             </button>
                         </div>
@@ -1349,6 +1434,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                             {podeEditarEstrategico ? (
                                                 proj.isEstrategico ? (
                                                     <button
+                                                        className="dashboard-project-toggle"
                                                         type="button"
                                                         onClick={() => handleToggleEstrategico(proj.codigo, true, proj.nome)}
                                                         title="Remover status estratégico"
@@ -1360,6 +1446,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                     </button>
                                                 ) : (
                                                     <button
+                                                        className="dashboard-project-toggle"
                                                         type="button"
                                                         onClick={() => handleToggleEstrategico(proj.codigo, false, proj.nome)}
                                                         title="Marcar como Estratégico"
@@ -1504,17 +1591,23 @@ export function DashboardEstrategico({ usuarioLogado }) {
                 </div>
             )}
         </div>
+        </div>
     );
 }
 
-const estiloKpiCard = (corBorda) => ({
+const estiloKpiCard = () => ({
     background: '#fff',
-    border: '1px solid #e2e8f0',
-    borderLeft: `5px solid ${corBorda}`,
-    borderRadius: '14px',
-    padding: '1.25rem',
-    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)'
+    border: '1px solid #d7e0e9',
+    borderRadius: '8px',
+    padding: '1.25rem'
 });
+
+const estiloKpiNumero = {
+    fontSize: '2.2rem',
+    color: '#0b4383',
+    margin: '4px 0 0 0',
+    fontWeight: 800
+};
 
 const estiloKpiLabel = {
     fontSize: '0.78rem',
@@ -1588,12 +1681,12 @@ const estiloEtiquetaAcao = (fundo, cor) => ({
     overflowWrap: 'anywhere'
 });
 
-const estiloAba = (ativa, corAtiva = '#2563eb') => ({
-    background: ativa ? corAtiva : 'transparent',
+const estiloAba = (ativa) => ({
+    background: ativa ? '#0b4383' : 'transparent',
     color: ativa ? '#fff' : '#475569',
-    border: 'none',
-    padding: '0.7rem 1.25rem',
-    borderRadius: '10px 10px 0 0',
+    border: '1px solid transparent',
+    padding: '0.7rem 1.1rem',
+    borderRadius: '6px 6px 0 0',
     fontWeight: 700,
     fontSize: '0.92rem',
     cursor: 'pointer',
@@ -1602,5 +1695,5 @@ const estiloAba = (ativa, corAtiva = '#2563eb') => ({
     gap: '8px',
     whiteSpace: 'nowrap',
     transition: 'all 0.2s ease',
-    boxShadow: ativa ? '0 -2px 6px rgba(0,0,0,0.04)' : 'none'
+    boxShadow: 'none'
 });

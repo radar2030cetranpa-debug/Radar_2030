@@ -85,7 +85,7 @@ export function TrocarSenha({ onVoltar }) {
                     <button type="button" onClick={onVoltar} style={{ flex: 1, background: '#e2e8f0', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', color: '#475569' }}>
                         Cancelar
                     </button>
-                    <button type="submit" disabled={carregando} style={{ flex: 1, background: '#2563eb', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
+                    <button type="submit" disabled={carregando} style={{ flex: 1, background: '#0b4383', color: '#fff', border: 'none', padding: '0.7rem', borderRadius: '6px', cursor: carregando ? 'wait' : 'pointer', fontWeight: '600' }}>
                         {carregando ? 'Salvando...' : 'Salvar'}
                     </button>
                 </div>

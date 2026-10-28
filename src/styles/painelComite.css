@@ -1,0 +1,193 @@
+.painel-comite-page {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.painel-comite-fluxo {
+    max-width: 760px;
+    margin: 0.75rem 0 0;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid #0b4383;
+    border-radius: 0 6px 6px 0;
+    background: #edf3f8;
+    color: #173b61;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.painel-comite-table-card {
+    min-width: 0;
+}
+
+.painel-comite-table-wrap {
+    min-width: 0;
+    overscroll-behavior-x: contain;
+}
+
+.painel-comite-table-wrap:focus-visible,
+.painel-comite-decision-button:focus-visible,
+.painel-comite-modal button:focus-visible,
+.painel-comite-modal select:focus-visible,
+.painel-comite-modal textarea:focus-visible {
+    outline: 3px solid #ed1c24 !important;
+    outline-offset: 3px;
+}
+
+.painel-comite-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.painel-comite-votes {
+    color: #334155;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.painel-comite-decision-button {
+    min-height: 44px;
+}
+
+.painel-comite-modal-backdrop {
+    box-sizing: border-box;
+}
+
+.painel-comite-modal {
+    box-sizing: border-box;
+}
+
+.painel-comite-modal-close {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #334155;
+    font-size: 1.7rem;
+    cursor: pointer;
+}
+
+.painel-comite-modal-close:hover {
+    background: #f1f5f9 !important;
+}
+
+.painel-comite-modal-close:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@media (max-width: 860px) {
+    .painel-comite-table-wrap {
+        overflow: visible !important;
+    }
+
+    .painel-comite-table {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .painel-comite-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .painel-comite-table tbody {
+        display: grid;
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .painel-comite-table tbody > tr:not(.painel-comite-row) {
+        display: block;
+    }
+
+    .painel-comite-table .painel-comite-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: hidden;
+        border: 1px solid #d7e0e9 !important;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .painel-comite-table .painel-comite-row td {
+        display: grid;
+        grid-template-columns: minmax(5.5rem, 0.55fr) minmax(0, 1fr);
+        align-items: start;
+        gap: 0.5rem;
+        min-width: 0;
+        padding: 0.75rem !important;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-wrap: anywhere;
+    }
+
+    .painel-comite-table .painel-comite-row td::before {
+        content: attr(data-label);
+        color: #475569;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .painel-comite-table .painel-comite-row td[data-label="Nome da Ação"],
+    .painel-comite-table .painel-comite-row td[data-label="Votos"],
+    .painel-comite-table .painel-comite-row td[data-label="Ação"] {
+        grid-column: 1 / -1;
+    }
+
+    .painel-comite-table .painel-comite-row td[data-label="Ação"] {
+        border-bottom: 0;
+    }
+
+    .painel-comite-table .painel-comite-row td[data-label="Ação"] button {
+        width: 100%;
+    }
+
+    .painel-comite-table .painel-comite-empty-cell {
+        display: block;
+        width: auto;
+        padding: 1.5rem !important;
+        border: 1px solid #d7e0e9 !important;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 540px) {
+    .painel-comite-page {
+        padding: 1.25rem 0.75rem !important;
+    }
+
+    .painel-comite-page h1 {
+        font-size: clamp(1.65rem, 7vw, 2rem) !important;
+        overflow-wrap: anywhere;
+    }
+
+    .painel-comite-stats {
+        grid-template-columns: 1fr !important;
+    }
+
+    .painel-comite-table .painel-comite-row {
+        grid-template-columns: 1fr;
+    }
+
+    .painel-comite-table .painel-comite-row td[data-label] {
+        grid-column: 1;
+    }
+
+    .painel-comite-modal {
+        padding: 1rem !important;
+    }
+
+    .painel-comite-modal h2 {
+        padding-right: 2rem;
+        font-size: 1.45rem !important;
+        overflow-wrap: anywhere;
+    }
+}

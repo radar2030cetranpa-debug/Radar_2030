@@ -1,7 +1,7 @@
 // src/pages/PainelAdmin.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
-import { Info, PaperPlaneRight } from '@phosphor-icons/react';
+import { Eye, Info, PaperPlaneRight, PencilSimple, Trash } from '@phosphor-icons/react';
 import {
     listarUsuarios,
     criarUsuario,
@@ -18,6 +18,7 @@ import { labelRole } from '../services/permissoes';
 import { SETORES_RADAR } from '../services/progresso';
 import Swal from 'sweetalert2';
 import { RadarLoader } from '../components/RadarLoader';
+import '../styles/painelAdmin.css';
 
 const ROLES = ['USUARIO', 'ADMIN_SETOR', 'COMITE', 'ADMIN_GERAL'];
 const PRAZOS = [
@@ -25,6 +26,21 @@ const PRAZOS = [
     { valor: 'MEDIO_PRAZO', rotulo: 'Médio Prazo' },
     { valor: 'LONGO_PRAZO', rotulo: 'Longo Prazo' }
 ];
+
+function formatarPrazo(prazo) {
+    const normalizado = String(prazo || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '_')
+        .replace(/^_|_$/g, '');
+    const prazoEncontrado = PRAZOS.find(({ valor, rotulo }) => (
+        valor === normalizado ||
+        rotulo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_') === normalizado
+    ));
+
+    return prazoEncontrado?.rotulo || String(prazo || '').trim() || '—';
+}
 
 const formVazio = { email: '', role: 'USUARIO', setor: '' };
 const acaoVazia = {
@@ -58,6 +74,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
     const [carregandoAcoes, setCarregandoAcoes] = useState(false);
     const [buscaAcao, setBuscaAcao] = useState('');
     const [acaoEditando, setAcaoEditando] = useState(null);
+    const [acaoVisualizando, setAcaoVisualizando] = useState(null);
     const [salvandoAcao, setSalvandoAcao] = useState(false);
     const [matrizesAprovadas, setMatrizesAprovadas] = useState([]);
     const [carregandoMatrizes, setCarregandoMatrizes] = useState(false);
@@ -587,34 +604,40 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <h3 style={{ color: '#334155', margin: 0 }}>Usuários Cadastrados</h3>
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <label className="painel-admin-sr-only" htmlFor="painel-admin-busca-usuarios">Buscar usuários por e-mail</label>
                         <input
+                            id="painel-admin-busca-usuarios"
                             type="text"
-                            placeholder="Buscar por e-mail..."
+                            placeholder="Buscar usuários por e-mail..."
                             value={busca}
                             onChange={e => setBusca(e.target.value)}
+                            aria-label="Buscar usuários por e-mail"
                             style={{ padding: '0.5rem 0.8rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9rem', minWidth: '200px' }}
                         />
                         {usuarios.some(usuario => (setoresPendentes[usuario.id] || '') !== (usuario.setor || '')) && (
                             <button
                                 type="button"
                                 onClick={salvarSetoresUsuarios}
-                                style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                                style={{ background: '#0b4383', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
                             >
-                                Salvar alterações
+                                Salvar setores
                             </button>
                         )}
                         <button
                             onClick={() => setMostrarForm(v => !v)}
-                            style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                            style={{ background: '#0b4383', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
                         >
                             {mostrarForm ? 'Cancelar' : '+ Novo Usuário'}
                         </button>
                     </div>
                 </div>
+                <p className="painel-admin-save-guidance">
+                    Perfil e status são salvos imediatamente. Alterações de setor ficam pendentes até você selecionar <strong>Salvar setores</strong>.
+                </p>
 
                 {/* Formulário de criação */}
                 {mostrarForm && (
-                    <form onSubmit={handleCriarUsuario} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                    <form onSubmit={handleCriarUsuario} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                             <label style={estiloLabel}>E-mail institucional *</label>
                             <input
@@ -652,7 +675,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                             <button
                                 type="submit"
                                 disabled={enviando}
-                                style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.65rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                                style={{ background: '#0b4383', color: '#fff', border: 'none', padding: '0.65rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                             >
                                 <PaperPlaneRight size={18} weight="bold" aria-hidden="true" />
                                 {enviando ? 'Cadastrando...' : 'Enviar Convite e Cadastrar'}
@@ -662,7 +685,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                 )}
 
                 {/* Tabela de usuários */}
-                <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div className="painel-admin-users-table-wrapper" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {carregando ? (
                         <div style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
                             <RadarLoader
@@ -674,21 +697,21 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                     ) : usuarios.length === 0 ? (
                         <p style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum usuário encontrado.</p>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                        <table className="painel-admin-users-table" aria-label="Usuários cadastrados e permissões" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                                    <th style={{ padding: '12px' }}>E-mail</th>
-                                    <th style={{ padding: '12px' }}>Perfil</th>
-                                    <th style={{ padding: '12px' }}>Setor</th>
-                                    <th style={{ padding: '12px', textAlign: 'center' }}>Status</th>
-                                    <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                                    <th scope="col" style={{ padding: '12px' }}>E-mail</th>
+                                    <th scope="col" style={{ padding: '12px' }}>Perfil</th>
+                                    <th scope="col" style={{ padding: '12px' }}>Setor</th>
+                                    <th scope="col" style={{ padding: '12px', textAlign: 'center' }}>Status</th>
+                                    <th scope="col" style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {usuarios.map(u => (
                                     <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9', opacity: u.ativo ? 1 : 0.5 }}>
-                                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#1e293b' }}>{u.email}</td>
-                                        <td style={{ padding: '12px' }}>
+                                        <td data-label="E-mail" style={{ padding: '12px', fontWeight: 'bold', color: '#1e293b' }}>{u.email}</td>
+                                        <td data-label="Perfil" style={{ padding: '12px' }}>
                                             {u.id === usuarioLogado?.id || !ehAdminGeral ? (
                                                 <span style={estiloBadgeRole(u.role)}>{labelRole(u.role)}</span>
                                             ) : (
@@ -701,7 +724,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                                                 </select>
                                             )}
                                         </td>
-                                        <td style={{ padding: '8px 12px', minWidth: '190px' }}>
+                                        <td data-label="Setor" style={{ padding: '8px 12px', minWidth: '190px' }}>
                                             <select
                                                 aria-label={`Setor de ${u.email}`}
                                                 value={setoresPendentes[u.id] ?? u.setor ?? ''}
@@ -716,24 +739,30 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                                                 {SETORES_RADAR.map(setor => <option key={setor.chave} value={setor.chave}>{setor.rotulo}</option>)}
                                             </select>
                                         </td>
-                                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                                        <td data-label="Status" style={{ padding: '12px', textAlign: 'center' }}>
                                             <span style={{ padding: '3px 8px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700, background: u.ativo ? '#dcfce7' : '#fee2e2', color: u.ativo ? '#166534' : '#991b1b' }}>
                                                 {u.ativo ? 'Ativo' : 'Inativo'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                        <td data-label="Ações" className="painel-admin-user-actions" style={{ padding: '12px', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                                             {podeGerenciarUsuario(u) && (
                                                 <>
                                                     <button
+                                                        type="button"
+                                                        className="painel-admin-user-action"
                                                         onClick={() => handleToggleAtivo(u)}
-                                                        style={{ background: 'transparent', border: '1px solid #cbd5e1', color: u.ativo ? '#d97706' : '#16a34a', cursor: 'pointer', borderRadius: '6px', padding: '4px 10px', fontSize: '0.82rem', fontWeight: 600 }}
+                                                        aria-label={`${u.ativo ? 'Desativar' : 'Ativar'} usuário ${u.email}`}
+                                                        style={{ background: '#fff', border: '1px solid #0b4383', color: '#0b4383', cursor: 'pointer', borderRadius: '6px', padding: '4px 10px', fontSize: '0.82rem', fontWeight: 600 }}
                                                     >
                                                         {u.ativo ? 'Desativar' : 'Ativar'}
                                                     </button>
                                                     {ehAdminGeral && (
                                                         <button
+                                                            type="button"
+                                                            className="painel-admin-user-action painel-admin-user-action-remove"
                                                             onClick={() => handleRemover(u)}
-                                                            style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}
+                                                            aria-label={`Remover acesso de ${u.email}`}
+                                                            style={{ background: 'transparent', border: '1px solid #fecaca', color: '#b91c1c', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem', borderRadius: '6px', padding: '4px 10px' }}
                                                         >
                                                             Remover
                                                         </button>
@@ -751,7 +780,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
 
             {/* Seção de Ações Estratégicas Base */}
             {pagina === 'adicionar-acoes' && ehAdminGeral && <div>
-                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
                     <h4 style={{ margin: '0 0 0.4rem', color: '#1e3a8a' }}>Importar ações em lote</h4>
                     <p style={{ margin: '0 0 0.8rem', color: '#475569', fontSize: '0.9rem' }}>
                         Selecione um arquivo Excel ou CSV. Use os cabeçalhos ID, Diretriz, Prazo, Meta, Indicador e, opcionalmente, LinhaPlanilha, OG, LAE, Setor, Responsavel e Restricoes. O arquivo será carregado para conferência; nada é salvo até clicar em importar.
@@ -772,7 +801,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                 </div>
 
                 {mostrarFormAcoes && (
-                    <form onSubmit={handleImportarAcoes} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
+                    <form onSubmit={handleImportarAcoes} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem' }}>
                         <p style={{ color: '#475569', fontSize: '0.9rem', marginTop: 0 }}>Confira os dados importados da planilha. Os campos com * são obrigatórios.</p>
                         {acoesForm.map((linha, indice) => (
                             <div key={indice} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', padding: '1rem 0', borderTop: '1px solid #e2e8f0' }}>
@@ -806,7 +835,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                             </div>
                         ))}
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            <button type="submit" disabled={enviandoAcoes} style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '0.55rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: enviandoAcoes ? 'wait' : 'pointer' }}>
+                            <button type="submit" disabled={enviandoAcoes} style={{ background: '#0b4383', color: '#fff', border: 'none', padding: '0.55rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: enviandoAcoes ? 'wait' : 'pointer' }}>
                                 {enviandoAcoes ? 'Importando...' : 'Importar ações'}
                             </button>
                         </div>
@@ -881,7 +910,7 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                 />
 
                 {acaoEditando && (
-                    <form onSubmit={handleSalvarAcao} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '1rem', marginBottom: '1.25rem' }}>
+                    <form onSubmit={handleSalvarAcao} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1.25rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                             <h4 style={{ color: '#1e293b', margin: 0 }}>Editando {acaoEditando.id}</h4>
                             <button type="button" onClick={() => setAcaoEditando(null)} style={botaoSecundario}>Cancelar</button>
@@ -926,20 +955,54 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                     </form>
                 )}
 
-                <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                {acaoVisualizando && (
+                    <section className="painel-admin-action-details" aria-labelledby="painel-admin-action-details-title">
+                        <div className="painel-admin-action-details-header">
+                            <h4 id="painel-admin-action-details-title">Ação {acaoVisualizando.id}</h4>
+                            <button
+                                type="button"
+                                className="painel-admin-action-close"
+                                onClick={() => setAcaoVisualizando(null)}
+                            >
+                                Fechar detalhes
+                            </button>
+                        </div>
+                        <dl className="painel-admin-action-details-grid">
+                            {[
+                                ['Diretriz', acaoVisualizando.diretriz],
+                                ['Setor', acaoVisualizando.setor],
+                                ['Prazo', formatarPrazo(acaoVisualizando.prazo)],
+                                ['OG', acaoVisualizando.og],
+                                ['LAE', acaoVisualizando.lae],
+                                ['Meta', acaoVisualizando.meta],
+                                ['Indicador', acaoVisualizando.indicador],
+                                ['Linha da planilha', acaoVisualizando.linhaPlanilha],
+                                ['Responsável', acaoVisualizando.responsavel],
+                                ['Restrições', acaoVisualizando.restricoes]
+                            ].map(([label, valor]) => (
+                                <div key={label} className="painel-admin-action-detail">
+                                    <dt>{label}</dt>
+                                    <dd>{valor || '—'}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </section>
+                )}
+
+                <div className="painel-admin-actions-table-wrapper" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {carregandoAcoes ? (
                         <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
                             <RadarLoader tamanho="md" mensagem="Carregando ações..." submensagem="Consultando dados do dashboard" />
                         </div>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                        <table className="painel-admin-actions-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                                    <th style={{ padding: '12px' }}>ID</th>
-                                    <th style={{ padding: '12px' }}>Diretriz</th>
-                                    <th style={{ padding: '12px' }}>Setor</th>
-                                    <th style={{ padding: '12px' }}>Prazo</th>
-                                    <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
+                                    <th scope="col" style={{ padding: '12px' }}>ID</th>
+                                    <th scope="col" style={{ padding: '12px' }}>Diretriz</th>
+                                    <th scope="col" style={{ padding: '12px' }}>Setor</th>
+                                    <th scope="col" style={{ padding: '12px' }}>Prazo</th>
+                                    <th scope="col" style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -947,15 +1010,48 @@ export function PainelAdmin({ usuarioLogado, onEditarMatriz }) {
                                     .filter(acao => `${acao.id} ${acao.diretriz} ${acao.setor || ''}`.toLowerCase().includes(buscaAcao.toLowerCase()))
                                     .map(acao => (
                                         <tr key={acao.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '12px', fontWeight: 700, color: '#2563eb', whiteSpace: 'nowrap' }}>{acao.id}</td>
-                                            <td style={{ padding: '12px', color: '#1e293b', minWidth: '250px' }}>{acao.diretriz}</td>
-                                            <td style={{ padding: '12px', fontWeight: 500, whiteSpace: 'nowrap' }}>{acao.setor || '—'}</td>
-                                            <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{acao.prazo}</td>
-                                            <td style={{ padding: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                                <button type="button" onClick={() => setAcaoEditando({ ...acao })} style={botaoSecundario}>Editar</button>
+                                            <td data-label="ID" style={{ padding: '12px', fontWeight: 700, color: '#0b4383', whiteSpace: 'nowrap' }}>{acao.id}</td>
+                                            <td data-label="Diretriz" style={{ padding: '12px', color: '#1e293b', minWidth: '250px' }}>{acao.diretriz}</td>
+                                            <td data-label="Setor" style={{ padding: '12px', fontWeight: 500, whiteSpace: 'nowrap' }}>{acao.setor || '—'}</td>
+                                            <td data-label="Prazo" style={{ padding: '12px', whiteSpace: 'nowrap' }}>{formatarPrazo(acao.prazo)}</td>
+                                            <td data-label="Ações" style={{ padding: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                                <div className="painel-admin-action-buttons">
+                                                    <button
+                                                        type="button"
+                                                        className="painel-admin-action-button"
+                                                        onClick={() => setAcaoVisualizando(acao)}
+                                                        aria-label={`Ver ação ${acao.id}`}
+                                                        title="Ver ação"
+                                                    >
+                                                        <Eye size={18} weight="bold" aria-hidden="true" />
+                                                        <span>Ver</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="painel-admin-action-button"
+                                                        onClick={() => {
+                                                            setAcaoVisualizando(null);
+                                                            setAcaoEditando({ ...acao });
+                                                        }}
+                                                        aria-label={`Editar ação ${acao.id}`}
+                                                        title="Editar ação"
+                                                    >
+                                                        <PencilSimple size={18} weight="bold" aria-hidden="true" />
+                                                        <span>Editar</span>
+                                                    </button>
                                                 {ehAdminGeral && (
-                                                    <button type="button" onClick={() => handleRemoverAcao(acao)} style={{ ...botaoSecundario, color: '#dc2626', borderColor: '#fecaca', marginLeft: '0.4rem' }}>Excluir</button>
+                                                        <button
+                                                            type="button"
+                                                            className="painel-admin-action-button painel-admin-action-button-delete"
+                                                            onClick={() => handleRemoverAcao(acao)}
+                                                            aria-label={`Excluir ação ${acao.id}`}
+                                                            title="Excluir ação"
+                                                        >
+                                                            <Trash size={18} weight="bold" aria-hidden="true" />
+                                                            <span>Excluir</span>
+                                                        </button>
                                                 )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -982,8 +1078,8 @@ function CampoAcao({ label, type = 'text', value, onChange, placeholder }) {
 
 const estiloLabel = { fontSize: '0.82rem', fontWeight: 600, color: '#475569' };
 const estiloInput = { padding: '0.55rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' };
-const botaoPrimario = { background: '#2563eb', color: '#fff', border: 'none', padding: '0.6rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' };
-const botaoSecundario = { background: '#fff', color: '#334155', border: '1px solid #cbd5e1', padding: '0.45rem 0.75rem', borderRadius: '7px', fontWeight: 600, cursor: 'pointer' };
+const botaoPrimario = { background: '#0b4383', color: '#fff', border: 'none', padding: '0.6rem 1rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' };
+const botaoSecundario = { background: '#fff', color: '#0b4383', border: '1px solid #b7c8da', padding: '0.45rem 0.75rem', borderRadius: '7px', fontWeight: 600, cursor: 'pointer' };
 
 function BotaoPagina({ ativo, onClick, children }) {
     return (
@@ -992,9 +1088,9 @@ function BotaoPagina({ ativo, onClick, children }) {
             onClick={onClick}
             aria-pressed={ativo}
             style={{
-                background: ativo ? '#2563eb' : '#fff',
+                background: ativo ? '#0b4383' : '#fff',
                 color: ativo ? '#fff' : '#334155',
-                border: `1px solid ${ativo ? '#2563eb' : '#cbd5e1'}`,
+                border: `1px solid ${ativo ? '#0b4383' : '#cbd5e1'}`,
                 padding: '0.55rem 0.9rem',
                 borderRadius: '8px',
                 fontWeight: 600,

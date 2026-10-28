@@ -31,6 +31,7 @@ const TELAS = {
 
 function ConteudoApp() {
     const [usuarioLogado, setUsuarioLogado] = useState(usuarioEmCache());
+    const loginTriggerRef = useRef(null);
     const tokenInicial = new URLSearchParams(window.location.search).get('token') || '';
     const [telaAtual, setTelaAtual] = useState(tokenInicial ? TELAS.RECUPERAR_SENHA : TELAS.HOME);
     const { mostrarLoading, esconderLoading } = useLoading();
@@ -102,6 +103,7 @@ function ConteudoApp() {
                     <PainelAndamento
                         usuarioLogado={usuarioLogado}
                         onNavigate={(tela) => setTelaAtual(tela)}
+                        loginTriggerRef={loginTriggerRef}
                         telas={TELAS}
                     />
                 );
@@ -156,6 +158,7 @@ function ConteudoApp() {
                 onNavigate={(novaTela) => setTelaAtual(novaTela)}
                 usuarioLogado={usuarioLogado}
                 setUsuarioLogado={setUsuarioLogado}
+                loginTriggerRef={loginTriggerRef}
                 telas={TELAS}
             />
 

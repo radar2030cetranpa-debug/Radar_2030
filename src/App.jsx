@@ -14,6 +14,7 @@ import { RecuperarSenha } from './pages/RecuperarSenha';
 import { SuporteTecnico } from './pages/SuporteTecnico';
 import { DashboardEstrategico } from './pages/DashboardEstrategico';
 import { LoadingProvider, useLoading } from './context/LoadingContext';
+import Swal from 'sweetalert2';
 
 const TELAS = {
     HOME: 'home',
@@ -41,13 +42,41 @@ function ConteudoApp() {
     const estavaDeslogadoRef = useRef(!usuarioEmCache());
 
     useEffect(() => {
-        if (usuarioEmCache()) {
+        let ativo = true;
+        if (!usuarioEmCache()) return () => { ativo = false; };
+
+        const validarAcesso = async () => {
             mostrarLoading('Validando acesso...', 'Conectando ao Radar 2030');
-            revalidarSessao()
-                .then((usuario) => setUsuarioLogado(usuario))
-                .catch(() => {})
-                .finally(() => esconderLoading());
-        }
+            let erroValidacao = null;
+
+            try {
+                const usuario = await revalidarSessao();
+                if (ativo) setUsuarioLogado(usuario);
+            } catch (err) {
+                erroValidacao = err;
+            } finally {
+                if (ativo) esconderLoading();
+            }
+
+            if (!ativo || !erroValidacao) return;
+
+            const mensagem = erroValidacao instanceof Error
+                ? erroValidacao.message
+                : 'Ocorreu um erro inesperado ao validar a sessão.';
+            const resultado = await Swal.fire({
+                icon: 'warning',
+                title: 'Não foi possível validar o acesso',
+                text: `${mensagem} Seu perfil salvo foi mantido; tente novamente quando a conexão estiver estável.`,
+                confirmButtonColor: '#0b4383',
+                confirmButtonText: 'Tentar novamente',
+                cancelButtonText: 'Continuar com perfil salvo',
+                showCancelButton: true
+            });
+            if (resultado.isConfirmed && ativo) await validarAcesso();
+        };
+
+        validarAcesso();
+        return () => { ativo = false; };
     }, [mostrarLoading, esconderLoading]);
 
     // Quando o usuário faz login (null -> usuário), vai direto para o painel home.

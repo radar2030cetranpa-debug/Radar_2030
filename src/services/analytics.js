@@ -2,22 +2,35 @@
 // Comunicação com o microsserviço analítico FastAPI (Python)
 
 const BASE_URL = import.meta.env.VITE_ANALYTICS_API_URL || 'http://localhost:8000';
+const REQUEST_TIMEOUT_MS = 15000;
 
 async function fetchAnalytics(endpoint, options = {}) {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        },
-        ...options
-    });
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+        const res = await fetch(`${BASE_URL}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            },
+            ...options,
+            signal: controller.signal
+        });
 
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail || errorData.mensagem || `Erro ${res.status} no serviço analítico`);
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.detail || errorData.mensagem || `Erro ${res.status} no serviço analítico`);
+        }
+
+        return await res.json();
+    } catch (err) {
+        if (err?.name === 'AbortError') {
+            throw new Error('O serviço analítico demorou para responder. Tente novamente.', { cause: err });
+        }
+        throw err;
+    } finally {
+        window.clearTimeout(timeoutId);
     }
-
-    return res.json();
 }
 
 /**

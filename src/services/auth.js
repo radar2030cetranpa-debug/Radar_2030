@@ -1,5 +1,5 @@
 // src/services/auth.js
-import { api, salvarToken, salvarUsuarioCache, obterUsuarioCache, limparSessaoApi } from './api';
+import { api, ApiError, salvarToken, salvarUsuarioCache, obterUsuarioCache, limparSessaoApi } from './api';
 
 /**
  * Faz login via API. Em caso de sucesso, guarda o token JWT e um cache do
@@ -30,9 +30,13 @@ export async function revalidarSessao() {
     const usuario = await api.get('/auth/profile');
     salvarUsuarioCache(usuario);
     return usuario;
-  } catch {
-    limparSessaoApi();
-    return null;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      limparSessaoApi();
+      return null;
+    }
+
+    throw err;
   }
 }
 

@@ -94,7 +94,7 @@ function SecaoAcordeao({ id, icone: Icone, titulo, descricao, abertaInicialmente
     const painelId = `${id}-painel`;
 
     return (
-        <section style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: '14px', overflow: 'hidden' }}>
+        <section className="dashboard-accordion-panel" style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: '14px', overflow: 'hidden' }}>
             <button
                 type="button"
                 aria-expanded={aberta}
@@ -135,104 +135,6 @@ function SecaoAcordeao({ id, icone: Icone, titulo, descricao, abertaInicialmente
     );
 }
 
-// Exemplo Oficial de Referência para apresentação institucional (AE 1.1.1.1 - PETRANS)
-const EXEMPLO_REFERENCIA_AE1111 = {
-    id: 'REF-2030-01',
-    nome: 'Implementação Inicial e Regulamentação do SET/PETRANS',
-    status: 'APROVADO',
-    percentual: 75,
-    criadoPor: { email: 'ctsist.cetran@pa.gov.br', setor: 'CTSIST' },
-    avaliadoPor: { email: 'sec.executiva@cetran.pa.gov.br' },
-    dataCriacao: '2026-06-10T09:00:00.000Z',
-    dataAvaliacao: '2026-06-15T15:30:00.000Z',
-    comentarioComite: 'Matriz aprovada com louvor e homologada por unanimidade pelo Comitê Gestor. O detalhamento do 5W2H nas tarefas confere total transparência à governança executiva do PETRANS. Autorizada a continuidade e o monitoramento pelo Radar 2030. — Cel PM Jorge Luiz Aragão Silva, Secretário-Executivo Cetran/PA.',
-    etapas: [
-        {
-            id: 'ET-REF-01',
-            titulo: 'Passo 1: Elaboração da Minuta Legal e Pareceres Técnicos',
-            impacto: 'ALTO',
-            observacao: 'Trabalho conjunto entre a CTSIST, Núcleo JusCetran e entidades parceiras.',
-            tarefas: [
-                {
-                    id: 'TF-REF-01',
-                    titulo: 'Levantamento da legislação federal e normas do PNATRANS',
-                    porque: 'Garantir conformidade jurídica com as metas de redução de sinistros viários.',
-                    quem: 'Núcleo JusCetran e Assessoria Técnica',
-                    onde: 'Sede do CETRAN/PA - Belém',
-                    quando: 'Maio/2026',
-                    como: 'Estudo normativo comparado e consolidação em matriz de compatibilidade.',
-                    quanto: 'Custeio ordinário da Secretaria-Executiva',
-                    concluida: true
-                },
-                {
-                    id: 'TF-REF-02',
-                    titulo: 'Redação da minuta preliminar do decreto de regulamentação do SET',
-                    porque: 'Instituir formalmente as diretrizes e fluxos operacionais dos órgãos estaduais e municipais.',
-                    quem: 'Comissão Temática de Sistema de Trânsito - CTSIST',
-                    onde: 'CETRAN/PA',
-                    quando: 'Junho/2026',
-                    como: 'Oficinas técnicas colegiadas com representantes dos órgãos executivos.',
-                    quanto: 'Sem custo adicional',
-                    concluida: true
-                }
-            ]
-        },
-        {
-            id: 'ET-REF-02',
-            titulo: 'Passo 2: Audiências Técnicas e Consulta aos Municípios',
-            impacto: 'ALTO',
-            observacao: 'Fase essencial para garantir a adesão dos 144 municípios paraenses.',
-            tarefas: [
-                {
-                    id: 'TF-REF-03',
-                    titulo: 'Apresentação da proposta do PETRANS às lideranças municipais integradas',
-                    porque: 'Construir consenso federativo e colher sugestões locais de implementação.',
-                    quem: 'CTSIST e Comissão Temática de Educação - CTEDUC',
-                    onde: 'Polos Regionais e Plataforma Virtual',
-                    quando: 'Julho/2026',
-                    como: 'Encontros regionais e formulário digital de contribuições com os gestores.',
-                    quanto: 'Diárias e infraestrutura de transmissão (Previsto no Plano de Trabalho)',
-                    concluida: true
-                },
-                {
-                    id: 'TF-REF-04',
-                    titulo: 'Consolidação final do plano e protocolo junto à Casa Civil para sanção',
-                    porque: 'Efetivar o ato de publicação oficial no Diário Oficial do Estado.',
-                    quem: 'Presidência e Secretaria-Executiva do CETRAN/PA',
-                    onde: 'Palácio do Governo / Casa Civil - Belém',
-                    quando: 'Agosto/2026',
-                    como: 'Processo formal no Sistema Eletrônico de Informações (PAE).',
-                    quanto: 'Recursos orçamentários previstos',
-                    concluida: false
-                }
-            ]
-        }
-    ],
-    votosComite: [
-        {
-            id: 'V-01',
-            membro: 'Comissão de Segurança Viária (CTSEG)',
-            voto: 'APROVAR',
-            data: '2026-06-12T11:20:00.000Z',
-            comentario: 'Matriz muito consistente. A distribuição do 5W2H por tarefas permite clareza nas entregas e a articulação jurídica mitiga riscos operacionais.'
-        },
-        {
-            id: 'V-02',
-            membro: 'Comissão de Educação para o Trânsito (CTEDUC)',
-            voto: 'APROVAR',
-            data: '2026-06-13T14:45:00.000Z',
-            comentario: 'Excelente a previsão da consulta regionalizada com os municípios. Aprovado integralmente.'
-        },
-        {
-            id: 'V-03',
-            membro: 'Secretaria-Executiva CETRAN/PA',
-            voto: 'APROVAR',
-            data: '2026-06-14T10:10:00.000Z',
-            comentario: 'Metas e prazos compatíveis com o cronograma anual do CETRAN 2030 e disponibilidade orçamentária.'
-        }
-    ]
-};
-
 export function DashboardEstrategico({ usuarioLogado }) {
     // Abas disponíveis: 'foco' (Ação Escolhida) como ABA PRINCIPAL!
     const [abaAtiva, setAbaAtiva] = useState('foco'); 
@@ -242,7 +144,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
     const [prazoSelecionado, setPrazoSelecionado] = useState('');
 
     // Estado da Ação em Foco
-    const [acaoIdSelecionada, setAcaoIdSelecionada] = useState('AE 1.1.1.1');
+    const [acaoIdSelecionada, setAcaoIdSelecionada] = useState('');
     const [buscaAcaoTexto, setBuscaAcaoTexto] = useState('');
     const [filtroEixoAcao, setFiltroEixoAcao] = useState('');
     const [historicoDetalhado, setHistoricoDetalhado] = useState(null);
@@ -254,6 +156,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
     const [dadosResumo, setDadosResumo] = useState(null);
     const [dadosObjetivos, setDadosObjetivos] = useState(null);
     const [dadosPrazosDetalhados, setDadosPrazosDetalhados] = useState(null);
+    const [projetosEstrategicosOverride, setProjetosEstrategicosOverride] = useState({});
+    const [projetosEstrategicosSalvando, setProjetosEstrategicosSalvando] = useState(() => new Set());
 
     const [carregando, setCarregando] = useState(true);
     const podeEditarEstrategico = ehAdmin(usuarioLogado);
@@ -446,14 +350,6 @@ export function DashboardEstrategico({ usuarioLogado }) {
             };
         }
 
-        // Se for a ação AE 1.1.1.1 e não tiver matriz no banco, exibe a referência oficial
-        if (acaoAtual?.id === 'AE 1.1.1.1') {
-            return {
-                ...EXEMPLO_REFERENCIA_AE1111,
-                origem: 'referencia'
-            };
-        }
-
         return null;
     }, [matrizesBanco, acaoAtual]);
 
@@ -468,11 +364,6 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     if (id) percentuais[id] = calcularPercentualEtapas(a.etapas || []);
                 });
             });
-
-        // Se não houver matriz aprovada ainda, inclui o exemplo oficial para visualização consistente
-        if (Object.keys(percentuais).length === 0) {
-            percentuais['AE 1.1.1.1'] = 75;
-        }
 
         const totalAcoes = acoesDashboard.length;
         const acoesComProgresso = Object.values(percentuais);
@@ -587,9 +478,19 @@ export function DashboardEstrategico({ usuarioLogado }) {
         };
     }, [matrizesBanco, acoesDashboard]);
 
-    const kpis = dadosResumo?.kpis || metricasConsolidadas.kpis;
+    const kpisBase = dadosResumo?.kpis || metricasConsolidadas.kpis;
     const eixos = dadosResumo?.visao1_eixos || metricasConsolidadas.eixos;
-    const projetos = dadosResumo?.visao2_projetos || metricasConsolidadas.projetos;
+    const projetosBase = dadosResumo?.visao2_projetos || metricasConsolidadas.projetos;
+    const projetos = projetosBase.map(projeto => ({
+        ...projeto,
+        isEstrategico: Object.prototype.hasOwnProperty.call(projetosEstrategicosOverride, projeto.codigo)
+            ? projetosEstrategicosOverride[projeto.codigo]
+            : projeto.isEstrategico
+    }));
+    const kpis = {
+        ...kpisBase,
+        totalEstrategicos: projetos.filter(projeto => projeto.isEstrategico).length
+    };
     const faixasPrazos = dadosResumo?.visao4_prazos || metricasConsolidadas.faixasPrazos;
     const setores = dadosResumo?.visao5_setores || metricasConsolidadas.setores;
     const percentuaisMetaGlobal = useMemo(
@@ -638,42 +539,28 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
     const handleToggleEstrategico = async (projetoCodigo, statusAtual, nomeProjeto) => {
         if (!podeEditarEstrategico) return;
+        if (projetosEstrategicosSalvando.has(projetoCodigo)) return;
 
         const novoStatus = !statusAtual;
-        const acaoTexto = novoStatus
-            ? 'marcar como Projeto Estratégico ⭐'
-            : 'remover o destaque de Projeto Estratégico';
+        setProjetosEstrategicosOverride(prev => ({ ...prev, [projetoCodigo]: novoStatus }));
+        setProjetosEstrategicosSalvando(prev => new Set(prev).add(projetoCodigo));
 
-        const result = await Swal.fire({
-            title: novoStatus ? 'Marcar Estratégico?' : 'Remover Estratégico?',
-            text: `Deseja ${acaoTexto} para "${projetoCodigo} - ${nomeProjeto}"?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: novoStatus ? '#0b4383' : '#ed1c24',
-            cancelButtonColor: '#0b4383',
-            confirmButtonText: novoStatus ? 'Sim, marcar ⭐' : 'Sim, remover',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await alternarProjetoEstrategico(projetoCodigo, novoStatus, usuarioLogado?.email);
-                Swal.fire({
-                    icon: 'success',
-                    title: novoStatus ? '⭐ Projeto Estratégico Definido!' : 'Destaque removido',
-                    text: `${projetoCodigo} foi atualizado com sucesso.`,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                carregarDados();
-            } catch (err) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro ao alterar',
-                    text: err.message || 'Não foi possível atualizar o status estratégico do projeto.',
-                    confirmButtonColor: '#2563eb'
-                });
-            }
+        try {
+            await alternarProjetoEstrategico(projetoCodigo, novoStatus, usuarioLogado?.email);
+        } catch (err) {
+            setProjetosEstrategicosOverride(prev => ({ ...prev, [projetoCodigo]: statusAtual }));
+            Swal.fire({
+                icon: 'error',
+                title: 'Não foi possível salvar',
+                text: err.message || `Não foi possível atualizar o projeto ${nomeProjeto}.`,
+                confirmButtonColor: '#0b4383'
+            });
+        } finally {
+            setProjetosEstrategicosSalvando(prev => {
+                const atualizado = new Set(prev);
+                atualizado.delete(projetoCodigo);
+                return atualizado;
+            });
         }
     };
 
@@ -769,7 +656,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
 
             {/* Cards de KPIs Principais no Topo */}
             <div className="dashboard-kpis" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={estiloKpiCard()}>
+                <div className="dashboard-kpi-card" style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Progresso Geral do Plano</span>
                     <h2 style={estiloKpiNumero}>
                         {kpis.progressoGlobal ?? 0}%
@@ -777,7 +664,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Média consolidada em cascata</span>
                 </div>
 
-                <div style={estiloKpiCard()}>
+                <div className="dashboard-kpi-card" style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Ações Concluídas (100%)</span>
                     <h2 style={estiloKpiNumero}>
                         {kpis.acoesConcluidas ?? 0}
@@ -785,7 +672,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>De {kpis.totalAcoes ?? 0} ações totais</span>
                 </div>
 
-                <div style={estiloKpiCard()}>
+                <div className="dashboard-kpi-card" style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>Ações em Andamento</span>
                     <h2 style={estiloKpiNumero}>
                         {kpis.acoesEmAndamento ?? 0}
@@ -793,7 +680,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Etapas em execução física</span>
                 </div>
 
-                <div style={estiloKpiCard()}>
+                <div className="dashboard-kpi-card" style={estiloKpiCard()}>
                     <span style={estiloKpiLabel}>{kpis.totalEstrategicos ?? 8} Projetos Estratégicos</span>
                     <h2 style={estiloKpiNumero}>
                         {kpis.progressoMedioEstrategicos ?? 0}%
@@ -966,7 +853,7 @@ export function DashboardEstrategico({ usuarioLogado }) {
                             >
                                 {acoesFiltradasParaSelecao.map(acao => {
                                     const temMatriz = matrizesBanco.some(matriz => (matriz.acoes || []).some(item => (item.acaoId || item.acao?.id) === acao.id));
-                                    const prefixo = acao.id === 'AE 1.1.1.1' ? '⭐ [Exemplo Oficial] ' : (temMatriz ? '✓ [Matriz Ativa] ' : '');
+                                    const prefixo = temMatriz ? '✓ [Matriz Ativa] ' : '';
                                     return <option key={acao.id} value={acao.id}>{prefixo}{acao.id} - {acao.diretriz || ''}</option>;
                                 })}
                             </select>
@@ -1106,8 +993,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                 </div>
 
                                                 {/* Barra de Progresso do Passo */}
-                                                <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
-                                                    <div style={{ height: '100%', width: `${pctEtapa}%`, background: corDoProgresso(pctEtapa), transition: 'width 0.3s ease' }} />
+                                                <div className="dashboard-progress-track" style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                                    <div className="dashboard-progress-fill" style={{ height: '100%', width: `${pctEtapa}%`, background: corDoProgresso(pctEtapa), transition: 'width 0.3s ease' }} />
                                                 </div>
 
                                                 {/* Detalhamento das Tarefas 5W2H do Passo */}
@@ -1355,8 +1242,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                         {eixo.nome}
                                     </h4>
 
-                                    <div style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1.25rem' }}>
-                                        <div style={{ height: '100%', width: `${eixo.progresso}%`, background: eixo.cor, borderRadius: '999px', transition: 'width 0.4s ease' }} />
+                                    <div className="dashboard-progress-track" style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+                                        <div className="dashboard-progress-fill" style={{ height: '100%', width: `${eixo.progresso}%`, background: eixo.cor, borderRadius: '999px', transition: 'width 0.4s ease' }} />
                                     </div>
                                 </div>
 
@@ -1414,7 +1301,9 @@ export function DashboardEstrategico({ usuarioLogado }) {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
-                        {projetosFiltrados.map((proj) => (
+                        {projetosFiltrados.map((proj) => {
+                            const salvandoProjeto = projetosEstrategicosSalvando.has(proj.codigo);
+                            return (
                             <div
                                 key={proj.codigo}
                                 style={{
@@ -1437,7 +1326,9 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                         className="dashboard-project-toggle"
                                                         type="button"
                                                         onClick={() => handleToggleEstrategico(proj.codigo, true, proj.nome)}
-                                                        title="Remover status estratégico"
+                                                        disabled={salvandoProjeto}
+                                                        aria-busy={salvandoProjeto}
+                                                        title={salvandoProjeto ? 'Salvando alteração...' : 'Remover status estratégico'}
                                                         aria-pressed="true"
                                                         style={{ background: '#fef08a', color: '#854d0e', border: '1px solid #facc15', padding: '2px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                                                     >
@@ -1449,7 +1340,9 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                         className="dashboard-project-toggle"
                                                         type="button"
                                                         onClick={() => handleToggleEstrategico(proj.codigo, false, proj.nome)}
-                                                        title="Marcar como Estratégico"
+                                                        disabled={salvandoProjeto}
+                                                        aria-busy={salvandoProjeto}
+                                                        title={salvandoProjeto ? 'Salvando alteração...' : 'Marcar como Estratégico'}
                                                         aria-pressed="false"
                                                         style={{ background: '#f8fafc', color: '#64748b', border: '1px dashed #cbd5e1', padding: '2px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                                                     >
@@ -1477,8 +1370,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                     </span>
                                 </div>
 
-                                <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
-                                    <div style={{ height: '100%', width: `${proj.progresso}%`, background: corDoProgresso(proj.progresso), borderRadius: '999px' }} />
+                                <div className="dashboard-progress-track" style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                    <div className="dashboard-progress-fill" style={{ height: '100%', width: `${proj.progresso}%`, background: corDoProgresso(proj.progresso), borderRadius: '999px' }} />
                                 </div>
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b' }}>
@@ -1486,7 +1379,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                     <span>Concluídas: <strong>{proj.acoesConcluidas}</strong></span>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -1527,8 +1421,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                     </span>
                                 </div>
 
-                                <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', margin: '0.75rem 0' }}>
-                                    <div style={{ height: '100%', width: `${faixa.progressoAcumulado}%`, background: faixa.cor, borderRadius: '999px' }} />
+                                <div className="dashboard-progress-track" style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', margin: '0.75rem 0' }}>
+                                    <div className="dashboard-progress-fill" style={{ height: '100%', width: `${faixa.progressoAcumulado}%`, background: faixa.cor, borderRadius: '999px' }} />
                                 </div>
 
                                 <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
@@ -1577,8 +1471,8 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                     </span>
                                 </div>
 
-                                <div style={{ height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
-                                    <div style={{ height: '100%', width: `${s.progresso}%`, background: corDoProgresso(s.progresso), borderRadius: '999px' }} />
+                                <div className="dashboard-progress-track" style={{ height: '10px', width: '100%', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                    <div className="dashboard-progress-fill" style={{ height: '100%', width: `${s.progresso}%`, background: corDoProgresso(s.progresso), borderRadius: '999px' }} />
                                 </div>
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b' }}>
@@ -1596,10 +1490,13 @@ export function DashboardEstrategico({ usuarioLogado }) {
 }
 
 const estiloKpiCard = () => ({
-    background: '#fff',
-    border: '1px solid #d7e0e9',
-    borderRadius: '8px',
-    padding: '1.25rem'
+    background: 'linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)',
+    border: '1px solid #dfeaf7',
+    borderRadius: '18px',
+    padding: '1.25rem 1.2rem',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.06), 0 3px 8px rgba(59, 130, 246, 0.08)'
 });
 
 const estiloKpiNumero = {
@@ -1682,11 +1579,11 @@ const estiloEtiquetaAcao = (fundo, cor) => ({
 });
 
 const estiloAba = (ativa) => ({
-    background: ativa ? '#0b4383' : 'transparent',
-    color: ativa ? '#fff' : '#475569',
-    border: '1px solid transparent',
-    padding: '0.7rem 1.1rem',
-    borderRadius: '6px 6px 0 0',
+    background: ativa ? 'linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%)' : '#f8fafc',
+    color: ativa ? '#0b4383' : '#475569',
+    border: ativa ? '1px solid #bfd8ff' : '1px solid #dfeaf6',
+    padding: '0.8rem 1rem',
+    borderRadius: '12px',
     fontWeight: 700,
     fontSize: '0.92rem',
     cursor: 'pointer',
@@ -1695,5 +1592,5 @@ const estiloAba = (ativa) => ({
     gap: '8px',
     whiteSpace: 'nowrap',
     transition: 'all 0.2s ease',
-    boxShadow: 'none'
+    boxShadow: ativa ? '0 10px 22px rgba(37, 99, 235, 0.12)' : '0 2px 8px rgba(15, 23, 42, 0.02)'
 });

@@ -1,5 +1,6 @@
 // src/services/exportService.js
 import * as XLSX from 'xlsx';
+import { calcularPercentualEtapas, calcularPercentualTarefa, contarTarefas } from './progresso';
 
 const formatarTexto = (valor) => {
     if (valor === null || valor === undefined) return '';
@@ -15,33 +16,6 @@ const formatarData = (valor) => {
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return '';
     return data.toLocaleDateString('pt-BR');
-};
-
-const contarTarefas = (etapas = []) => {
-    let total = 0;
-    let concluidas = 0;
-
-    (etapas || []).forEach((etapa) => {
-        if (!Array.isArray(etapa?.tarefas) || etapa.tarefas.length === 0) return;
-        total += etapa.tarefas.length;
-        concluidas += etapa.tarefas.filter((tarefa) => tarefa?.concluida).length;
-    });
-
-    return { total, concluidas };
-};
-
-const calcularPercentualEtapas = (etapas = []) => {
-    if (!Array.isArray(etapas) || etapas.length === 0) return 0;
-
-    const somatorio = etapas.reduce((soma, etapa) => {
-        if (Array.isArray(etapa?.tarefas) && etapa.tarefas.length > 0) {
-            const concluidas = etapa.tarefas.filter((tarefa) => tarefa?.concluida).length;
-            return soma + Math.round((concluidas / etapa.tarefas.length) * 100);
-        }
-        return soma + (etapa?.concluida ? 100 : 0);
-    }, 0);
-
-    return Math.round(somatorio / etapas.length);
 };
 
 const resumirEtapas = (etapas = []) => {
@@ -61,7 +35,10 @@ const resumirEtapas = (etapas = []) => {
                     `Quando: ${tarefa?.quando || ''}`,
                     `Como: ${tarefa?.como || ''}`,
                     `Quanto: ${tarefa?.quanto || ''}`,
-                    `Concluída: ${tarefa?.concluida ? 'Sim' : 'Não'}`,
+                    `Concluída: ${calcularPercentualTarefa(tarefa) === 100 ? 'Sim' : 'Não'}`,
+                    ...(Array.isArray(tarefa?.subetapas) && tarefa.subetapas.length > 0
+                        ? [`Subetapas: ${tarefa.subetapas.map((subetapa) => `${subetapa.titulo || 'Sem descrição'} (${subetapa.concluida ? 'Concluída' : 'Pendente'})`).join(', ')}`]
+                        : []),
                 ].join(' | ');
             }).join(' ; ')
             : 'Sem tarefas cadastradas';

@@ -35,6 +35,7 @@ import {
     SETORES_RADAR, 
     calcularPercentualEtapas, 
     calcularPercentualEtapa,
+    calcularPercentualTarefa,
     contarTarefas,
     normalizarSetor,
     obterPercentuaisPorAcao,
@@ -1003,17 +1004,19 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                         {tarefas.map((tarefa, tIdx) => {
                                                             const impactoTarefa = tarefa.impacto || etapa.impacto || 'MEDIO';
                                                             const observacaoTarefa = tarefa.observacao || (tIdx === 0 ? etapa.observacao : '');
+                                                            const tarefaConcluida = calcularPercentualTarefa(tarefa) === 100;
+                                                            const subetapas = Array.isArray(tarefa.subetapas) ? tarefa.subetapas : [];
                                                             return (
                                                             <div key={tarefa.id || tIdx} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
-                                                                    {tarefa.concluida
+                                                                    {tarefaConcluida
                                                                         ? <CheckCircle size={18} weight="fill" style={{ color: '#16a34a' }} aria-hidden="true" />
                                                                         : <ClockCounterClockwise size={18} weight="bold" style={{ color: '#d97706' }} aria-hidden="true" />}
-                                                                    <strong style={{ flex: 1, fontSize: '0.95rem', color: tarefa.concluida ? '#166534' : '#0f172a' }}>
+                                                                    <strong style={{ flex: 1, fontSize: '0.95rem', color: tarefaConcluida ? '#166534' : '#0f172a' }}>
                                                                         {tarefa.titulo || 'Tarefa sem descrição'}
                                                                     </strong>
-                                                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '999px', background: tarefa.concluida ? '#dcfce7' : '#fef3c7', color: tarefa.concluida ? '#15803d' : '#b45309' }}>
-                                                                        {tarefa.concluida ? 'CONCLUÍDA' : 'EM EXECUÇÃO'}
+                                                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '999px', background: tarefaConcluida ? '#dcfce7' : '#fef3c7', color: tarefaConcluida ? '#15803d' : '#b45309' }}>
+                                                                        {tarefaConcluida ? 'CONCLUÍDA' : 'EM EXECUÇÃO'}
                                                                     </span>
                                                                 </div>
                                                                 <span style={{ display: 'inline-block', marginBottom: '0.5rem', padding: '2px 8px', borderRadius: '6px', background: impactoTarefa === 'ALTO' ? '#fef2f2' : impactoTarefa === 'BAIXO' ? '#f1f5f9' : '#eff6ff', color: impactoTarefa === 'ALTO' ? '#b91c1c' : impactoTarefa === 'BAIXO' ? '#475569' : '#1d4ed8', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -1032,6 +1035,19 @@ export function DashboardEstrategico({ usuarioLogado }) {
                                                                 {observacaoTarefa && (
                                                                     <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#475569', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
                                                                         <strong>Observações da tarefa:</strong> {observacaoTarefa}
+                                                                    </div>
+                                                                )}
+                                                                {subetapas.length > 0 && (
+                                                                    <div style={{ marginTop: '0.65rem', padding: '0.6rem 0.75rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                                                        <strong style={{ fontSize: '0.82rem', color: '#334155' }}>Subetapas da entrega</strong>
+                                                                        <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.2rem', color: '#475569', fontSize: '0.84rem' }}>
+                                                                            {subetapas.map((subetapa, subindice) => (
+                                                                                <li key={subetapa.id || subindice} style={{ color: subetapa.concluida ? '#166534' : '#475569' }}>
+                                                                                    {subetapa.concluida ? 'Concluída: ' : 'Pendente: '}
+                                                                                    {subetapa.titulo || `Subetapa ${subindice + 1}`}
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
                                                                     </div>
                                                                 )}
                                                             </div>

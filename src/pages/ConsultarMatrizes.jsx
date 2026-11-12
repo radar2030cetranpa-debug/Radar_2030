@@ -368,7 +368,28 @@ export function ConsultarMatrizes({ usuarioLogado, modo = 'todas', onNavigate, o
                                                 </p>
                                                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
                                                     {item.etapas.map((etapa, i) => (
-                                                        <li key={etapa.id || i}>{etapa.titulo || `Etapa ${i + 1}`}: {calcularPercentualEtapa(etapa)}%{Array.isArray(etapa.tarefas) && etapa.tarefas.length > 0 ? ` (${etapa.tarefas.length} ${etapa.tarefas.length === 1 ? 'tarefa' : 'tarefas'})` : ''}</li>
+                                                        <li key={etapa.id || i}>
+                                                            {etapa.titulo || `Etapa ${i + 1}`}: {calcularPercentualEtapa(etapa)}%
+                                                            {Array.isArray(etapa.tarefas) && etapa.tarefas.length > 0 && (
+                                                                <ul style={{ paddingLeft: '18px' }}>
+                                                                    {etapa.tarefas.map((tarefa, tarefaIndice) => (
+                                                                        <li key={tarefa.id || tarefaIndice}>
+                                                                            {tarefa.titulo || `Tarefa ${tarefaIndice + 1}`}
+                                                                            {Array.isArray(tarefa.subetapas) && tarefa.subetapas.length > 0 && (
+                                                                                <ul style={{ paddingLeft: '18px' }}>
+                                                                                    {tarefa.subetapas.map((subetapa, subindice) => (
+                                                                                        <li key={subetapa.id || subindice}>
+                                                                                            {subetapa.concluida ? '✓ ' : '○ '}
+                                                                                            {subetapa.titulo || `Subetapa ${subindice + 1}`}
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            )}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </li>
                                                     ))}
                                                 </ul>
                                             </div>

@@ -7,15 +7,11 @@ import {
     contarTarefas,
     criarEtapaVazia,
     criarTarefaVazia,
+    criarSubetapaVazia,
     CAMPOS_5W2H_TAREFA,
-    obterNumeroReal,
-    formatarNumeroReal,
-    converterEntradaParaReal,
-    formatarValorReal
+    calcularPercentualTarefa
 } from '../services/progresso';
 import Swal from 'sweetalert2';
-
-const valorRealPreenchido = (valor) => obterNumeroReal(valor) !== null;
 
 function corDoProgresso(percentual) {
     if (percentual >= 70) return '#16a34a';
@@ -56,7 +52,6 @@ function BarraProgresso({ percentual }) {
 /** Campos 5W2H de uma tarefa (modo edição). */
 function FormularioTarefa({ tarefa, onChange }) {
     const atualizar = (chave, valor) => onChange({ ...tarefa, [chave]: valor });
-    const atualizarQuanto = (valor) => atualizar('quanto', converterEntradaParaReal(valor));
     return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1.1rem' }}>
             <div style={{ gridColumn: '1 / -1', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
@@ -74,51 +69,7 @@ function FormularioTarefa({ tarefa, onChange }) {
                     style={{ gridColumn: campo.tipo === 'textarea' ? '1 / -1' : 'auto' }}
                 >
                     <label style={estiloLabel}>{campo.rotulo}</label>
-                    {campo.chave === 'quanto' ? (
-                        <>
-                            <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                                <span
-                                    aria-hidden="true"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        padding: '0 0.85rem',
-                                        border: `1.5px solid ${valorRealPreenchido(tarefa.quanto) ? '#cbd5e1' : '#dc2626'}`,
-                                        borderRight: 0,
-                                        borderRadius: '10px 0 0 10px',
-                                        background: '#f1f5f9',
-                                        color: '#475569',
-                                        fontWeight: 700
-                                    }}
-                                >
-                                    R$
-                                </span>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={formatarNumeroReal(tarefa.quanto)}
-                                    aria-invalid={!valorRealPreenchido(tarefa.quanto)}
-                                    onChange={(e) => atualizarQuanto(e.target.value)}
-                                    placeholder="0,00"
-                                    style={{
-                                        ...estiloInput,
-                                        minWidth: 0,
-                                        borderColor: valorRealPreenchido(tarefa.quanto) ? '#cbd5e1' : '#dc2626',
-                                        borderLeft: 0,
-                                        borderRadius: '0 10px 10px 0'
-                                    }}
-                                />
-                            </div>
-                            <span style={{ display: 'block', marginTop: '0.35rem', color: '#64748b', fontSize: '0.8rem' }}>
-                                Digite apenas números; os dois últimos dígitos correspondem aos centavos.
-                            </span>
-                            {tarefa.quanto && !valorRealPreenchido(tarefa.quanto) && (
-                                <span style={{ display: 'block', marginTop: '0.35rem', color: '#92400e', fontSize: '0.8rem' }}>
-                                    Valor cadastrado anteriormente: {tarefa.quanto}. Informe o valor numérico em reais.
-                                </span>
-                            )}
-                        </>
-                    ) : campo.tipo === 'textarea' ? (
+                    {campo.tipo === 'textarea' ? (
                         <textarea
                             rows={campo.chave === 'titulo' ? 2 : 3}
                             value={tarefa[campo.chave] || ''}
@@ -191,9 +142,7 @@ function DetalhesTarefa({ tarefa }) {
                 <div key={campo.chave} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 0.95rem', gridColumn: campo.tipo === 'textarea' ? '1 / -1' : 'auto' }}>
                     <span style={estiloLabel}>{campo.rotulo}</span>
                     <span style={{ fontSize: '0.95rem', color: '#0f172a', whiteSpace: 'pre-line' }}>
-                        {campo.chave === 'quanto' && valorRealPreenchido(tarefa.quanto)
-                            ? formatarValorReal(tarefa.quanto)
-                            : tarefa[campo.chave] || '-'}
+                        {tarefa[campo.chave] || '-'}
                     </span>
                 </div>
             ))}
@@ -213,26 +162,43 @@ function DetalhesTarefa({ tarefa }) {
 
 function CartaoTarefa({ tarefa, indice, editavelTitulos, editavelConclusao, onChange, onRemover }) {
     const [aberta, setAberta] = useState(editavelTitulos && !tarefa.titulo);
+    const [subetapasAbertas, setSubetapasAbertas] = useState(false);
     const camposObrigatorios = CAMPOS_5W2H_TAREFA;
-    const camposPreenchidos = camposObrigatorios.filter(campo => campo.chave === 'quanto'
-        ? valorRealPreenchido(tarefa.quanto)
-        : tarefa[campo.chave]?.trim()).length;
+    const camposPreenchidos = camposObrigatorios.filter(campo => String(tarefa[campo.chave] ?? '').trim()).length;
     const detalhesCompletos = camposPreenchidos === camposObrigatorios.length;
     const painelDetalhesId = `detalhes-tarefa-${tarefa.id}`;
+    const subetapas = Array.isArray(tarefa.subetapas) ? tarefa.subetapas : [];
+    const tarefaConcluida = calcularPercentualTarefa(tarefa) === 100;
+    const atualizarSubetapas = (novasSubetapas) => onChange({ ...tarefa, subetapas: novasSubetapas });
+    const marcarTarefa = () => {
+        const concluida = !tarefaConcluida;
+        onChange({
+            ...tarefa,
+            concluida,
+            concluidaEm: concluida ? new Date().toISOString() : null,
+            ...(subetapas.length > 0 && {
+                subetapas: subetapas.map(subetapa => ({
+                    ...subetapa,
+                    concluida,
+                    concluidaEm: concluida ? new Date().toISOString() : null
+                }))
+            })
+        });
+    };
 
     return (
         <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '8px', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <input
                     type="checkbox"
-                    checked={Boolean(tarefa.concluida)}
+                    checked={tarefaConcluida}
                     disabled={!editavelConclusao}
-                    onChange={() => onChange({ ...tarefa, concluida: !tarefa.concluida, concluidaEm: !tarefa.concluida ? new Date().toISOString() : null })}
+                    onChange={marcarTarefa}
                     aria-label={`Tarefa ${indice + 1} concluída`}
                     style={{ width: '22px', height: '22px', cursor: editavelConclusao ? 'pointer' : 'not-allowed', flexShrink: 0, accentColor: '#16a34a' }}
                 />
                 <div style={{ flex: 1, minWidth: '180px' }}>
-                    <div style={{ fontSize: '1rem', color: tarefa.concluida ? '#16a34a' : '#0f172a', textDecoration: tarefa.concluida ? 'line-through' : 'none' }}>
+                    <div style={{ fontSize: '1rem', color: tarefaConcluida ? '#16a34a' : '#0f172a', textDecoration: tarefaConcluida ? 'line-through' : 'none' }}>
                         <strong style={{ color: '#475569', marginRight: '0.5rem' }}>Tarefa {indice + 1}</strong>
                         {tarefa.titulo || <em style={{ color: '#94a3b8', textDecoration: 'none' }}>Adicione um título nos detalhes 5W2H</em>}
                     </div>
@@ -297,6 +263,84 @@ function CartaoTarefa({ tarefa, indice, editavelTitulos, editavelConclusao, onCh
                     ? <FormularioTarefa tarefa={tarefa} onChange={onChange} />
                     : <DetalhesTarefa tarefa={tarefa} />)}
             </div>
+            {(editavelTitulos || subetapas.length > 0) && (
+                <section style={{ marginTop: '0.9rem', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.85rem', background: '#f8fafc' }}>
+                    {editavelTitulos ? (
+                        <button
+                            type="button"
+                            onClick={() => setSubetapasAbertas(!subetapasAbertas)}
+                            aria-expanded={subetapasAbertas}
+                            style={{ border: 0, padding: 0, background: 'transparent', color: '#334155', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                            {subetapasAbertas ? '−' : '+'} Subetapas da entrega (opcional)
+                            {subetapas.length > 0 && ` · ${subetapas.filter(item => item.concluida).length} de ${subetapas.length} concluídas`}
+                        </button>
+                    ) : (
+                        <strong style={{ color: '#334155', fontSize: '0.88rem' }}>Subetapas da entrega</strong>
+                    )}
+                    {(subetapasAbertas || !editavelTitulos) && (
+                        <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.65rem' }}>
+                            {subetapas.map((subetapa, subindice) => (
+                                <div key={subetapa.id || subindice} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(subetapa.concluida)}
+                                        disabled={!editavelConclusao}
+                                        aria-label={`Subetapa ${subindice + 1} concluída`}
+                                        onChange={() => atualizarSubetapas(subetapas.map(item => item.id === subetapa.id
+                                            ? { ...item, concluida: !item.concluida, concluidaEm: !item.concluida ? new Date().toISOString() : null }
+                                            : item))}
+                                    />
+                                    {editavelTitulos ? (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={subetapa.titulo || ''}
+                                                aria-label={`Descrição da subetapa ${subindice + 1}`}
+                                                onChange={(e) => atualizarSubetapas(subetapas.map(item => item.id === subetapa.id ? { ...item, titulo: e.target.value } : item))}
+                                                placeholder={`Descreva o passo ${subindice + 1}`}
+                                                style={{ ...estiloInput, padding: '0.5rem 0.65rem', fontSize: '0.9rem' }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => atualizarSubetapas(subetapas.filter(item => item.id !== subetapa.id))}
+                                                aria-label={`Remover subetapa ${subindice + 1}`}
+                                                style={{ border: 0, background: 'transparent', color: '#dc2626', cursor: 'pointer', fontSize: '1.2rem' }}
+                                            >×</button>
+                                        </>
+                                    ) : (
+                                        <span style={{ color: subetapa.concluida ? '#166534' : '#334155', textDecoration: subetapa.concluida ? 'line-through' : 'none' }}>
+                                            {subetapa.titulo || `Subetapa ${subindice + 1}`}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                            {editavelTitulos && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const novasSubetapas = [...subetapas, criarSubetapaVazia()];
+                                        onChange({
+                                            ...tarefa,
+                                            ...(subetapas.length === 0 && { concluida: false, concluidaEm: null }),
+                                            subetapas: novasSubetapas
+                                        });
+                                        setSubetapasAbertas(true);
+                                    }}
+                                    style={{ justifySelf: 'start', border: '1px dashed #0b4383', borderRadius: '6px', padding: '0.4rem 0.7rem', background: '#fff', color: '#0b4383', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    + Adicionar subetapa
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {editavelTitulos && subetapasAbertas && (
+                        <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.78rem' }}>
+                            Use este checklist se precisar acompanhar passos menores da entrega. É opcional.
+                        </p>
+                    )}
+                </section>
+            )}
         </div>
     );
 }

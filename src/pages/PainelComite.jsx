@@ -474,6 +474,16 @@ export function PainelComite({ usuarioLogado }) {
                                                                         <strong>Tarefa {j + 1}:</strong> {t.titulo || '-'} · Impacto: {String(t.impacto || etapa.impacto || 'MEDIO').toLowerCase()}<br />
                                                                         Por quê: {t.porque || '-'} | Quem: {t.quem || '-'} | Onde: {t.onde || '-'} | Quando: {t.quando || '-'}<br />
                                                                         Como: {t.como || '-'} | Quanto: {t.quanto ? formatarValorReal(t.quanto) : '-'}
+                                                                        {Array.isArray(t.subetapas) && t.subetapas.length > 0 && (
+                                                                            <ul style={{ margin: '4px 0 0', paddingLeft: '20px' }}>
+                                                                                {t.subetapas.map((subetapa, subindice) => (
+                                                                                    <li key={subetapa.id || subindice}>
+                                                                                        {subetapa.concluida ? 'Concluída: ' : 'Pendente: '}
+                                                                                        {subetapa.titulo || `Subetapa ${subindice + 1}`}
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
                                                                         {(t.observacao || (j === 0 && etapa.observacao)) && (
                                                                             <div style={{ marginTop: '4px' }}>
                                                                                 Observações da tarefa: {t.observacao || etapa.observacao}

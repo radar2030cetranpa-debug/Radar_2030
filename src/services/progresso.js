@@ -11,11 +11,11 @@ import { acoesEstrategicas } from './acoes_data';
  *   Ação -> Etapas -> Tarefas, e cada Tarefa carrega seu próprio 5W2H.
  *
  *   etapa  = { id, titulo, impacto, observacao, tarefas: [tarefa], concluida? }
- *   tarefa = { id, titulo, porque, quem, onde, quando, como, quanto, concluida, concluidaEm }
+ *   tarefa = { id, titulo, porque, quem, onde, quando, como, quanto, concluida, concluidaEm, subetapas? }
  *
- * Cada tarefa concluída representa uma parte concluída da etapa; cada etapa
- * pesa igual dentro da ação. Etapas legadas (sem "tarefas", só com "concluida")
- * continuam válidas e contam como 0% ou 100%.
+ * Subetapas são opcionais e, quando cadastradas, detalham o progresso da tarefa.
+ * Cada etapa pesa igual dentro da ação. Etapas legadas (sem "tarefas", só com
+ * "concluida") continuam válidas e contam como 0% ou 100%.
  */
 
 export const CAMPOS_5W2H_TAREFA = [
@@ -72,6 +72,14 @@ export function criarTarefaVazia() {
     };
 }
 
+export function criarSubetapaVazia() {
+    return {
+        id: `SE-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        titulo: '',
+        concluida: false
+    };
+}
+
 export function criarEtapaVazia(titulo = '') {
     return {
         id: `ET-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -102,11 +110,19 @@ export function etapaTemTarefas(etapa) {
 }
 
 /** Percentual de uma única etapa: tarefas concluídas / total de tarefas. */
+export function calcularPercentualTarefa(tarefa) {
+    if (!tarefa) return 0;
+    const subetapas = Array.isArray(tarefa.subetapas) ? tarefa.subetapas : [];
+    if (subetapas.length === 0) return tarefa.concluida ? 100 : 0;
+    const concluidas = subetapas.filter(subetapa => subetapa.concluida).length;
+    return Math.round((concluidas / subetapas.length) * 100);
+}
+
 export function calcularPercentualEtapa(etapa) {
     if (!etapa) return 0;
     if (etapaTemTarefas(etapa)) {
-        const concluidas = etapa.tarefas.filter(t => t.concluida).length;
-        return Math.round((concluidas / etapa.tarefas.length) * 100);
+        const soma = etapa.tarefas.reduce((total, tarefa) => total + calcularPercentualTarefa(tarefa), 0);
+        return Math.round(soma / etapa.tarefas.length);
     }
     return etapa.concluida ? 100 : 0; // etapa legada, sem tarefas
 }
@@ -128,7 +144,7 @@ export function contarTarefas(etapas = []) {
     etapas.forEach(e => {
         if (etapaTemTarefas(e)) {
             total += e.tarefas.length;
-            concluidas += e.tarefas.filter(t => t.concluida).length;
+            concluidas += e.tarefas.filter(t => calcularPercentualTarefa(t) === 100).length;
         }
     });
     return { total, concluidas };
